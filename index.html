@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Puerto Rico para ti</title>
+
+  <!-- Mapa real sin API key: Leaflet + OpenStreetMap. Necesita internet. -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+ <style>
+ 
+ .artist-card .card-body{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.artist-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.artist-photo{
+  width:46px;
+  height:46px;
+  border-radius:50%;
+  object-fit:cover;
+  border:2px solid rgba(0,180,216,.35);
+  box-shadow:0 6px 14px rgba(2,24,47,.16);
+  flex-shrink:0;
+  background:#dbeafe;
+}
+
+.artist-head h3{
+  margin:0;
+}
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+    :root{
+      --navy:#02182f; --navy2:#032b52; --blue:#0077b6; --cyan:#00b4d8;
+      --sand:#ffe8a3; --cream:#fff7d6; --red:#ef233c; --white:#fff;
+      --ink:#102033; --muted:#627083; --card:rgba(255,255,255,.94);
+      --radius:24px; --shadow:0 18px 45px rgba(2,24,47,.28);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--ink); min-height:100vh; overflow-x:hidden;
+      background:
+        radial-gradient(circle at 10% 0%,rgba(0,180,216,.35),transparent 26%),
+        radial-gradient(circle at 90% 8%,rgba(255,232,163,.25),transparent 24%),
+        linear-gradient(180deg,var(--navy) 0%,var(--navy2) 42%,#075985 68%,#f6d88a 100%);
+    }
+    body:before{
+      content:"";position:fixed;inset:0;z-index:-2;
+      background:linear-gradient(rgba(2,24,47,.55),rgba(2,24,47,.35)),url("https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1800&q=80") center/cover no-repeat;
+      opacity:.38;
+    }
+    a{text-decoration:none;color:inherit}
+    .app{width:min(1120px,100%);margin:auto;padding:16px}
+    .hero{min-height:92vh;display:flex;align-items:center;padding:28px 0}
+    .hero-card{
+      width:100%;border-radius:34px;padding:28px;color:white;box-shadow:var(--shadow);
+      border:1px solid rgba(255,255,255,.22);overflow:hidden;position:relative;
+      background:linear-gradient(135deg,rgba(2,24,47,.94),rgba(0,119,182,.64)),url("https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1600&q=80") center/cover;
+    }
+    .flag-strip{display:flex;gap:6px;margin-bottom:18px}
+    .flag-strip span{height:8px;border-radius:99px;flex:1;background:var(--red)}
+    .flag-strip span:nth-child(2),.flag-strip span:nth-child(4){background:white}
+    .flag-strip span:nth-child(3){background:var(--cyan)}
+
+    .eyebrow{display:inline-flex;background:rgba(255,255,255,.92);color:var(--navy);padding:8px 12px;border-radius:99px;font-weight:900;font-size:.82rem;margin-bottom:14px}
+    h1{font-size:clamp(2.7rem,11vw,5.8rem);line-height:.9;letter-spacing:-.065em;margin-bottom:16px}
+    .hero p{max-width:760px;color:rgba(255,255,255,.92);font-size:1.06rem;line-height:1.55}
+    .hero-actions{display:grid;gap:12px;margin-top:22px}
+    .btn{border:0;border-radius:18px;padding:15px 18px;font-weight:950;cursor:pointer;text-align:center;display:inline-flex;justify-content:center;align-items:center;gap:8px}
+    .btn-primary{background:var(--red);color:white}
+    .btn-light{background:white;color:var(--navy)}
+
+    .quick-nav{position:sticky;top:0;z-index:40;display:flex;gap:10px;overflow-x:auto;padding:10px 2px 12px;background:rgba(2,24,47,.86);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.14);scrollbar-width:none}
+    .quick-nav::-webkit-scrollbar{display:none}
+    .quick-nav a{white-space:nowrap;background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.18);color:white;border-radius:99px;padding:10px 14px;font-weight:850;font-size:.88rem}
+
+    section{padding:44px 0 10px}
+    .section-head{margin-bottom:18px}
+    .tag{display:inline-block;background:rgba(255,232,163,.20);color:var(--sand);padding:7px 12px;border-radius:99px;font-weight:950;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
+    h2{font-size:clamp(1.9rem,7vw,3.2rem);line-height:1;letter-spacing:-.045em;color:white;margin-bottom:8px}
+    .section-head p{color:rgba(255,255,255,.82);line-height:1.5}
+
+    .grid{display:grid;grid-template-columns:1fr;gap:14px}
+    .card{background:var(--card);border:1px solid rgba(255,255,255,.82);border-radius:var(--radius);box-shadow:0 14px 32px rgba(0,0,0,.12);overflow:hidden;backdrop-filter:blur(10px)}
+    .card-body{padding:18px}
+    .card h3{font-size:1.1rem;margin-bottom:6px;color:var(--ink)}
+    .card p{color:var(--muted);line-height:1.45;font-size:.95rem}
+    .card-image{width:100%;height:190px;object-fit:cover;display:block}
+    .mini-card{text-align:center;padding:20px}
+    .mini-card .icon{font-size:1.8rem;margin-bottom:8px}
+
+    .feature-card{min-height:300px;display:flex;flex-direction:column;justify-content:flex-end;padding:18px;color:white;background:linear-gradient(180deg,rgba(2,24,47,.05),rgba(2,24,47,.9)),var(--bg);background-size:cover;background-position:center}
+    .feature-card h3,.feature-card p{color:white;text-shadow:0 2px 10px rgba(0,0,0,.35)}
+    .pill-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+    .pill{font-size:.78rem;font-weight:850;color:var(--navy);background:rgba(0,180,216,.13);padding:7px 10px;border-radius:99px}
+    .feature-card .pill{color:white;background:rgba(255,255,255,.22)}
+
+    .tabs{display:flex;gap:10px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none}
+    .tabs::-webkit-scrollbar{display:none}
+    .tab-btn{border:0;white-space:nowrap;border-radius:99px;padding:11px 14px;font-weight:950;cursor:pointer;color:var(--navy);background:rgba(255,255,255,.92);box-shadow:0 8px 18px rgba(0,0,0,.08)}
+    .tab-btn.active{background:var(--red);color:white}
+    .hidden{display:none!important}
+
+    .map-wrap,.chat-shell{background:rgba(2,24,47,.76);border:1px solid rgba(255,255,255,.18);border-radius:30px;box-shadow:var(--shadow);overflow:hidden;backdrop-filter:blur(12px)}
+    .map-wrap{padding:16px}
+    .map-toolbar{display:grid;gap:10px;margin-bottom:14px}
+    .search{width:100%;border:1px solid rgba(255,255,255,.2);border-radius:16px;padding:13px 14px;font:inherit;outline:none;background:rgba(255,255,255,.96)}
+
+    #prMap{height:360px;width:100%;border-radius:24px;overflow:hidden;border:1px solid rgba(255,255,255,.22);box-shadow:0 16px 34px rgba(0,0,0,.25);margin-bottom:14px;background:#cdefff}
+
+    /* Control pequeño para cambiar entre Satélite y Mapa normal */
+    .leaflet-control-layers {
+      border-radius: 14px !important;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(0,0,0,.18) !important;
+      border: none !important;
+      font-size: 12px;
+      background: rgba(255,255,255,.94) !important;
+    }
+
+    .leaflet-control-layers-toggle {
+      width: 32px !important;
+      height: 32px !important;
+      background-size: 18px 18px !important;
+    }
+
+    .leaflet-control-layers-expanded {
+      padding: 6px 8px !important;
+    }
+
+    .leaflet-control-layers-list {
+      margin: 0 !important;
+    }
+
+    .leaflet-control-layers label {
+      margin: 2px 0 !important;
+      line-height: 1.1;
+      font-size: 12px !important;
+      color: var(--navy);
+      font-weight: 700;
+    }
+
+    .leaflet-control-layers-selector {
+      margin-right: 4px !important;
+      transform: scale(.85);
+    }
+
+    .municipio-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-height:330px;overflow-y:auto;padding-right:4px}
+    .town-btn{border:1px solid rgba(255,255,255,.18);border-radius:15px;background:rgba(255,255,255,.92);padding:11px 8px;font-weight:850;color:var(--navy);cursor:pointer;font-size:.86rem}
+    .town-btn:hover,.town-btn.active{background:var(--red);color:white}
+    .town-panel{background:rgba(255,255,255,.96);border-radius:22px;padding:16px}
+    .town-panel h3{color:var(--navy);font-size:1.55rem;margin-bottom:4px}
+    .region{color:var(--muted);font-weight:850;margin-bottom:12px}
+    .visit-list{display:grid;gap:8px;margin:12px 0;list-style:none}
+    .visit-list li{background:#f5fbff;border:1px solid rgba(2,62,138,.10);border-radius:14px;padding:10px 12px;font-weight:750;font-size:.92rem}
+
+    .chat-header{padding:18px;background:linear-gradient(135deg,var(--navy),var(--blue));color:white}
+    .chat-header h3{font-size:1.25rem;margin-bottom:4px}
+    .chat-header p{opacity:.9;font-size:.92rem;line-height:1.4}
+    .chat-messages{height:380px;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:linear-gradient(180deg,#f6fdff,#fff7d6)}
+    .msg{
+  max-width:86%;
+  padding:12px 14px;
+  border-radius:18px;
+  line-height:1.42;
+  font-size:.94rem;
+  box-shadow:0 8px 18px rgba(0,0,0,.05);
+  white-space:pre-line;
+}
+    .bot{align-self:flex-start;background:white;border-bottom-left-radius:5px}
+    .user{align-self:flex-end;background:var(--navy);color:white;border-bottom-right-radius:5px}
+    .suggestions{display:flex;gap:8px;overflow-x:auto;padding:12px 16px;background:white;scrollbar-width:none}
+    .suggestions::-webkit-scrollbar{display:none}
+    .suggestion{border:0;background:rgba(0,119,182,.1);color:var(--navy);border-radius:99px;padding:9px 12px;white-space:nowrap;font-weight:850;cursor:pointer;font-size:.82rem}
+    .chat-input-area{display:grid;grid-template-columns:1fr auto;gap:8px;padding:14px;background:white}
+    .chat-input-area input{border:1px solid rgba(2,62,138,.14);border-radius:16px;padding:13px 14px;font:inherit;outline:none;min-width:0}
+    .send-btn{border:0;border-radius:16px;padding:0 16px;background:var(--red);color:white;font-weight:950;cursor:pointer}
+	.chatgpt-helper{
+  padding:0 14px 14px;
+  background:white;
+}
+
+.bot-image{
+  width:100%;
+  max-width:260px;
+  border-radius:14px;
+  margin:10px 0;
+  display:block;
+  box-shadow:0 8px 18px rgba(0,0,0,.15);
+}
+
+.chatgpt-btn{
+  width:100%;
+  border:0;
+  border-radius:16px;
+  padding:12px 14px;
+  font-weight:900;
+  cursor:pointer;
+  background:linear-gradient(135deg,var(--navy),var(--blue));
+  color:white;
+  box-shadow:0 10px 22px rgba(2,24,47,.16);
+}
+
+.chatgpt-btn:hover{
+  transform:translateY(-1px);
+}
+	
+    .footer{text-align:center;color:rgba(255,255,255,.82);font-weight:800;padding:42px 0 26px}
+
+    @media(min-width:700px){
+      .app{padding:24px}
+      .hero-card{padding:44px}
+      .hero-actions{grid-template-columns:auto auto;justify-content:flex-start}
+      .grid.two{grid-template-columns:repeat(2,1fr)}
+      .grid.three{grid-template-columns:repeat(3,1fr)}
+      .grid.four{grid-template-columns:repeat(4,1fr)}
+      .map-toolbar{grid-template-columns:1fr auto;align-items:center}
+      .municipio-grid{grid-template-columns:repeat(3,1fr)}
+    }
+
+    @media(min-width:980px){
+      .map-layout{display:grid;grid-template-columns:1fr 365px;gap:16px;align-items:start}
+      .town-panel{position:sticky;top:86px}
+      .municipio-grid{grid-template-columns:repeat(4,1fr)}
+    }
+	
+	.img-marisol{
+  object-position: center 25%; 
+}
+
+	.img-denise{
+  object-position: center 20%; 
+}
+
+
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="hero" id="inicio">
+    <div class="hero-card">
+      <div class="flag-strip"><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="eyebrow">🇵🇷 Mini guía cultural de PR</div>
+      <h1>Puerto Rico para ti</h1>
+      <p>Una guía visual, rápida y boricua para conocer la Isla del Encanto: comida, playas, música, tradiciones, pueblos, lugares turísticos y un chat local para preguntar sin aburrirse leyendo.</p>
+      <div class="hero-actions"><a class="btn btn-primary" href="#datos">Explorar la isla</a><a class="btn btn-light" href="#chat">Hablar con Boricua Bot</a></div>
+    </div>
+  </header>
+
+  <nav class="quick-nav">
+    <a href="#datos">Datos</a><a href="#comida">Comida</a><a href="#turismo">Turismo</a><a href="#playas">Playas</a><a href="#musica">Música</a><a href="#deportes">Deportes</a><a href="#miss">Miss Universo</a><a href="#palabras">Palabras</a><a href="#tradiciones">Tradiciones</a><a href="#mapa">Mapa</a><a href="#chat">Chat</a>
+  </nav>
+
+  <section id="datos">
+    <div class="section-head"><span class="tag">Lo básico</span><h2>Puerto Rico en datos rápidos</h2><p>Lo esencial para entender la isla sin meterle demasiado texto.</p></div>
+    <div class="grid two four">
+      <article class="card mini-card"><div class="icon">🏙️</div><h3>Capital</h3><p>San Juan</p></article>
+      <article class="card mini-card"><div class="icon">🗺️</div><h3>Municipios</h3><p>78 pueblos</p></article>
+      <article class="card mini-card"><div class="icon">💬</div><h3>Idiomas</h3><p>Español e inglés</p></article>
+      <article class="card mini-card"><div class="icon">💵</div><h3>Moneda</h3><p>Dólar estadounidense</p></article>
+      <article class="card mini-card"><div class="icon">🏝️</div><h3>Tipo de lugar</h3><p>Isla caribeña</p></article>
+      <article class="card mini-card"><div class="icon">🌊</div><h3>Playas</h3><p>Cientos de playas</p></article>
+      <article class="card mini-card"><div class="icon">🎶</div><h3>Cultura</h3><p>Taína, africana y española</p></article>
+      <article class="card mini-card"><div class="icon">🇵🇷</div><h3>Gentilicio</h3><p>Boricua</p></article>
+    </div>
+  </section>
+
+  <section id="comida">
+    <div class="section-head"><span class="tag">Sabor boricua</span><h2>Comida típica de Puerto Rico</h2><p>Platos, frituras y antojos que debes conocer.</p></div>
+    <div class="grid two three">
+      <article class="card"><img class="card-image" src="https://www.plateapr.com/wp-content/uploads/2024/12/Lechonera-El-Mojito.png" alt="Plato navideño boricua"><div class="card-body"><h3>Plato navideño boricua</h3><p>Arroz con gandules, pernil, pasteles y morcilla. El combo clásico de Navidad y celebraciones familiares.</p><div class="pill-row"><span class="pill">arroz con gandules</span><span class="pill">pernil</span><span class="pill">pasteles</span><span class="pill">morcilla</span></div></div></article>
+      <article class="card"><img class="card-image" src="https://www.placerespr.com/wp-content/uploads/2024/01/mofongo.jpg" alt="Mofongo"><div class="card-body"><h3>Mofongo</h3><p>Plátano majado con ajo y chicharrón. Uno de los platos más conocidos de Puerto Rico. Se acompaña con diferentes carnes y mariscos según el gusto.</p></div></article>
+      <article class="card"><img class="card-image" src="https://www.foodrepublic.com/img/gallery/kan-kan-is-a-meat-mohawk-of-the-highest-caliber-upgrade/l-intro-1688989635.jpg" alt="Chuleta Can Can"><div class="card-body"><h3>Chuleta Can Can</h3><p>Chuleta grande con cuerito crujiente, bien jugosa y potente.</p></div></article>
+      <article class="card"><img class="card-image" src="https://www.tasteatlas.com/images/dishes/aff814c53a044b91b5c0f845f9d67d21.jpg" alt="Tripleta"><div class="card-body"><h3>Tripleta</h3><p>Sándwich puertorriqueño caracterizado por llevar tres (o más) tipos de carne, usualmente pernil, jamón y bistec (o pollo/pastrami), servido en pan de agua o sobao con queso,papitas, vegetales y salsas..</p></div></article>
+      <article class="card"><img class="card-image" src="https://senseandedibility.com/wp-content/uploads/2020/07/Pinchos-11.jpg" alt="Pinchos"><div class="card-body"><h3>Pinchos</h3><p>Carne en palito, usualmente pollo o cerdo, con pan y salsa.</p></div></article>
+      <article class="card"><img class="card-image" src="https://shopperwalmart.azureedge.net/strapi/assets/bandeja_puertorriquena_5a2fd190bf.png" alt="Frituras boricuas"><div class="card-body"><h3>Frituras</h3><p>Alcapurrias, bacalaítos, pastelillos y sorullitos. Perfectas para playa o chinchorreo.</p></div></article>
+    </div>
+  </section>
+
+  <section id="turismo">
+    <div class="section-head"><span class="tag">Imperdibles</span><h2>Lugares turísticos que debe visitar</h2><p>Una lista visual de lugares esenciales para enamorarse de Puerto Rico.</p></div>
+    <div class="grid two three">
+      <article class="card feature-card" style="--bg:url('https://rh-destinations.com/wp-content/uploads/2023/03/zixi-zhou-zq08xWkBgsI-unsplash-e1680029009479.jpg')"><h3>Viejo San Juan</h3><p>Calles adoquinadas, colores, historia, cafés y ambiente colonial.</p><div class="pill-row"><span class="pill">historia</span><span class="pill">fotos</span></div></article>
+      <article class="card feature-card" style="--bg:url('https://sanjuanfoodtours.com/wp-content/uploads/2023/01/El-Morro-San-Juan-Puerto-Rico-scaled-1.jpeg')"><h3>El Morro</h3><p>Fortaleza icónica frente al mar. De los símbolos más famosos de la isla.</p><div class="pill-row"><span class="pill">San Juan</span><span class="pill">castillo</span></div></article>
+      <article class="card feature-card" style="--bg:url('https://media.tacdn.com/media/attractions-splice-spp-674x446/07/75/d4/2e.jpg')"><h3>El Yunque</h3><p>Bosque tropical con cascadas, senderos y mucha naturaleza.</p><div class="pill-row"><span class="pill">naturaleza</span><span class="pill">aventura</span></div></article>
+      <article class="card feature-card" style="--bg:url('https://www.meer.com/attachments/766541cd59860346ddb53a153e2c54f1487b8b74/store/fill/1090/613/1bbde5d48739b05aa5816fafd5360c2e0ff3a40815be9340c2f550c8b364/The-superb-sea-of-Culebra-Puerto-Rico.jpg')"><h3>Culebra</h3><p>Playas claras, agua azul y vibe de islita paradisíaca.</p><div class="pill-row"><span class="pill">playa</span><span class="pill">relax</span></div></article>
+      <article class="card feature-card" style="--bg:url('https://i0.wp.com/thevalemagazine.com/wp-content/uploads/2022/10/bioluminescent-mosquito-bay-vieques.jpeg?fit=1200%2C800&ssl=1')"><h3>Vieques</h3><p>Playas naturales y una bahía bioluminiscente brutal.</p><div class="pill-row"><span class="pill">bio bay</span><span class="pill">isla</span></div></article>
+      <article class="card feature-card" style="--bg:url('https://travel.usnews.com/images/Carlos_Carmona__500pxcabo-rojo-nature-sunset.jpg')"><h3>Cabo Rojo</h3><p>Faro, salinas, playas hermosas y atardeceres espectaculares.</p><div class="pill-row"><span class="pill">oeste</span><span class="pill">sunset</span></div></article>
+    </div>
+  </section>
+
+  <section id="playas">
+    <div class="section-head"><span class="tag">Arena y mar</span><h2>Playas famosas de Puerto Rico</h2><p>Playas turísticas, familiares, de surf y de aguas hermosas.</p></div>
+    <div class="grid two three">
+      <article class="card"><img class="card-image" src="https://lh5.googleusercontent.com/p/AF1QipOJoVpIoj-mZAaTBLVepR7sMFznpGTU9JUaWgf0=s1600" alt="Flamenco"><div class="card-body"><h3>Flamenco, Culebra</h3><p>De las más famosas por su arena clara y aguas preciosas.</p></div></article>
+      <article class="card"><img class="card-image" src="https://images.trvl-media.com/place/6081867/d9d6fdbb-d43b-4f0e-98e0-9c53171f9d10.jpg" alt="Crash Boat"><div class="card-body"><h3>Crash Boat, Aguadilla</h3><p>Agua clara, ambiente bonito y spots excelentes para fotos.</p></div></article>
+      <article class="card"><img class="card-image" src="https://trvlcollective.com/wp-content/uploads/2021/04/untitled-0151.jpg" alt="Buyé"><div class="card-body"><h3>Buyé, Cabo Rojo</h3><p>Tranquila, familiar y perfecta para pasar el día.</p></div></article>
+      <article class="card"><img class="card-image" src="https://boricuaonline.com/wp-content/uploads/2019/08/luquillo-playa-azul.jpg" alt="Luquillo"><div class="card-body"><h3>Luquillo</h3><p>Playa amplia con kioskos cerca para comer rico.</p></div></article>
+      <article class="card"><img class="card-image" src="https://www.globotreks.com/wp-content/uploads/2020/02/Rincon-Domes-Beach.jpg" alt="Domes"><div class="card-body"><h3>Domes, Rincón</h3><p>Conocida por surf y atardeceres bien lindos.</p></div></article>
+      <article class="card"><img class="card-image" src="https://www.puertoricodaytrips.com/wp-images-1000x560/mar-chiquita-2.jpg" alt="Mar Chiquita"><div class="card-body"><h3>Mar Chiquita, Manatí</h3><p>Bien visual, con formaciones rocosas y un paisaje distinto.</p></div></article>
+    </div>
+  </section>
+
+  <section id="musica">
+  <div class="section-head">
+    <span class="tag">Talento boricua</span>
+    <h2>Música, artistas y géneros</h2>
+    <p>Puerto Rico es pequeño en mapa, pero gigante en música.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="urbano">Urbano</button>
+    <button class="tab-btn" data-tab="pop">Pop/Balada</button>
+    <button class="tab-btn" data-tab="salsa">Salsa</button>
+    <button class="tab-btn" data-tab="raiz">Raíz</button>
+  </div>
+
+  <div id="urbano" class="music-tab grid two three">
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://i.scdn.co/image/ab6761610000517481f47f44084e0a09b5f0fa13" alt="Bad Bunny">
+          <h3>Bad Bunny</h3>
+        </div>
+        <p>Ícono global del urbano y la cultura moderna boricua.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRkOW5YEpAYPi6YWz-hXIXe42B7hYB-oxasPg&s" alt="Daddy Yankee">
+          <h3>Daddy Yankee</h3>
+        </div>
+        <p>Nombre gigante en la historia del reggaetón.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://yt3.googleusercontent.com/HP6juVD6JxQHkn59rcRkAjWieB5X5i6cd42Uviuko7NKvfPCp_liKJlpXi9r8z4oPeVl0g2_=s900-c-k-c0x00ffffff-no-rj" alt="Don Omar">
+          <h3>Don Omar</h3>
+        </div>
+        <p>Figura grande de la música urbana latina.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://www.famousbirthdays.com/faces/queen-ivy-image.jpg" alt="Ivy Queen">
+          <h3>Ivy Queen</h3>
+        </div>
+        <p>La Caballota. Voz femenina clave del género.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://static.wikia.nocookie.net/eswikia/images/6/63/Wisin-y-yandel.jpg/revision/latest?cb=20160909172139" alt="Wisin & Yandel">
+          <h3>Wisin & Yandel</h3>
+        </div>
+        <p>Dúo histórico del reggaetón boricua.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://www.hola.com/us/horizon/square/e5f1e8985134-miami-florida-rauw-alejandro-attends-the-25th-latin-grammy-awards-at-kaseya-cent.jpg" alt="Rauw Alejandro">
+          <h3>Rauw Alejandro</h3>
+        </div>
+        <p>Urbano, pop y baile con proyección mundial.</p>
+      </div>
+    </article>
+  </div>
+
+  <div id="pop" class="music-tab grid two three hidden">
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://commons.wikimedia.org/wiki/Special:FilePath/Ricky%20Martin%202013.jpg" alt="Ricky Martin">
+          <h3>Ricky Martin</h3>
+        </div>
+        <p>Pop latino y proyección mundial.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://i.pinimg.com/236x/3b/5d/81/3b5d81330552a3c6745feaf942137a3e.jpg" alt="Chayanne">
+          <h3>Chayanne</h3>
+        </div>
+        <p>Pop romántico y uno de los más queridos.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://hips.hearstapps.com/hmg-prod/images/gettyimages-888179100_luis-fonsi.jpg?crop=1xw:1.0xh;center,top&resize=640:*" alt="Luis Fonsi">
+          <h3>Luis Fonsi</h3>
+        </div>
+        <p>Balada pop y éxitos latinos.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://www.eluniverso.com/resizer/v2/6JCGAO2X3JBMZNAUOFFY7EQES4.jpg?auth=c15aa6349ef909d2e8303a5aad93d3ee399200dbe756786e8e74dddc71c42a9a&width=1086&height=670&quality=75&smart=true" alt="Kany García">
+          <h3>Kany García</h3>
+        </div>
+        <p>Cantautora de letras profundas.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRkWLnwplsj8pyRYFFZRVNA9NeJlYlg997KNA&s" alt="Ednita Nazario">
+          <h3>Ednita Nazario</h3>
+        </div>
+        <p>De las grandes voces femeninas boricuas.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://cdn.britannica.com/73/181173-050-FB8DB829/Jose-Feliciano-2012.jpg" alt="José Feliciano">
+          <h3>José Feliciano</h3>
+        </div>
+        <p>Cantante y guitarrista reconocido mundialmente.</p>
+      </div>
+    </article>
+  </div>
+
+  <div id="salsa" class="music-tab grid two three hidden">
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://apparell.com/cdn/shop/collections/hector-lavoe-3961740.png?v=1751541667&width=480" alt="Héctor Lavoe">
+          <h3>Héctor Lavoe</h3>
+        </div>
+        <p>Leyenda de la salsa nacida en Ponce.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6YS1Pqp1pn5-dM6KXaiTvYdAeSj60AxOB8A&s" alt="Gilberto Santa Rosa">
+          <h3>Gilberto Santa Rosa</h3>
+        </div>
+        <p>El Caballero de la Salsa.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://impactolatino.com/wp-content/uploads/2012/11/El+Gran+Combo+De+Puerto+Rico+PNG4.png" alt="El Gran Combo">
+          <h3>El Gran Combo</h3>
+        </div>
+        <p>Institución musical de Puerto Rico.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://i.discogs.com/_1x5D9ZQA-4ibiLWeUiu4l2Liz3W_F_DW3rlaCH4EiA/rs:fit/g:sm/q:90/h:366/w:416/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9BLTExMTE2/MDgtMTcyMTQyNzYw/MC03NTQzLmpwZWc.jpeg" alt="Víctor Manuelle">
+          <h3>Víctor Manuelle</h3>
+        </div>
+        <p>Uno de los salseros modernos más conocidos.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSI0S-NkrMHLGJs-887hoogjBHq8b9wkR11Bw&s" alt="Frankie Ruiz">
+          <h3>Frankie Ruiz</h3>
+        </div>
+        <p>El Papá de la Salsa.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://www.biografiasyvidas.com/biografia/r/fotos/rivera_ismael.jpg" alt="Ismael Rivera">
+          <h3>Ismael Rivera</h3>
+        </div>
+        <p>Figura esencial de la música afrocaribeña.</p>
+      </div>
+    </article>
+  </div>
+
+  <div id="raiz" class="music-tab grid two three hidden">
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://static.wixstatic.com/media/c034b1_609f9cae07de46fba6939b9f62b6abb0~mv2.png/v1/fill/w_720,h_706,al_c,q_90/c034b1_609f9cae07de46fba6939b9f62b6abb0~mv2.png" alt="Bomba puertorriqueña">
+          <h3>Bomba</h3>
+        </div>
+        <p>Ritmo afroboricua con tambor, baile e identidad.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHStuLM_F8V92deNlzKxYZz1B5J3u7dRJcgw&s" alt="Plena puertorriqueña">
+          <h3>Plena</h3>
+        </div>
+        <p>Música popular que cuenta historias del pueblo.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ-4O2q17AfO33OBn3-4ijkx60fUK6IvDtgxQ&s" alt="Cuatro puertorriqueño">
+          <h3>Cuatro puertorriqueño</h3>
+        </div>
+        <p>Instrumento típico de la música jíbara.</p>
+      </div>
+    </article>
+
+    <article class="card artist-card">
+      <div class="card-body">
+        <div class="artist-head">
+          <img class="artist-photo" src="https://puertoricoismusic.org/wp-content/uploads/2014/12/ParrandaNew.jpg" alt="Parrandas puertorriqueñas">
+          <h3>Parrandas</h3>
+        </div>
+        <p>Música navideña de casa en casa.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+ <section id="deportes">
+  <div class="section-head">
+    <span class="tag">Orgullo deportivo</span>
+    <h2>Deportistas boricuas destacados</h2>
+    <p>Figuras que han llevado el nombre de Puerto Rico al mundo.</p>
+  </div>
+
+  <div class="grid two four">
+    <article class="card">
+      <img class="card-image" src="https://commons.wikimedia.org/wiki/Special:FilePath/Roberto_Clemente_1965.jpg" alt="Roberto Clemente">
+      <div class="card-body">
+        <h3>Roberto Clemente</h3>
+        <p>Leyenda del béisbol y símbolo humanitario boricua.</p>
+      </div>
+    </article>
+
+    <article class="card">
+      <img class="card-image" src="https://static.wixstatic.com/media/f6effc_d4b4d5cf25db4017a7885b4bfc413fea~mv2.jpg/v1/fill/w_523,h_523,al_c,lg_1,q_80,enc_avif,quality_auto/St%20patrick%20with%20flag.jpg" alt="Mónica Puig">
+      <div class="card-body">
+        <h3>Mónica Puig</h3>
+        <p>Primera medalla de oro olímpica para Puerto Rico.</p>
+      </div>
+    </article>
+
+    <article class="card">
+      <img class="card-image" src="https://www.elnuevodia.com/resizer/v2/FUQEBHYNQBA4LMJRLOQHNPE2QM.jpg?auth=b7257db4955a21fcae9262f4f3c834855cda8f3d63fc492bf12c1ba9caa8e8d7&quality=75&width=640&height=360&focal=1038%2C130" alt="Carlos Arroyo">
+      <div class="card-body">
+        <h3>Carlos Arroyo</h3>
+        <p>Figura grande del baloncesto boricua.</p>
+      </div>
+    </article>
+
+    <article class="card">
+      <img class="card-image" src="https://s.hdnux.com/photos/01/56/10/15/28869448/3/rawImage.jpg" alt="José Juan Barea">
+      <div class="card-body">
+        <h3>José Juan Barea</h3>
+        <p>Campeón NBA y orgullo boricua.</p>
+      </div>
+    </article>
+
+    <article class="card">
+      <img class="card-image" src="https://media.gettyimages.com/id/51601674/photo/wba-ibf-super-welterweight-champion-felix-trinidad.jpg?s=1024x1024&w=gi&k=20&c=DimvE1waWn1CW3DdrElsqRA_QLAcdGZiP4bzRnjydRo=" alt="Tito Trinidad">
+      <div class="card-body">
+        <h3>Tito Trinidad</h3>
+        <p>Campeón mundial de boxeo.</p>
+      </div>
+    </article>
+
+    <article class="card">
+      <img class="card-image" src="https://doseofbuffa.com/wp-content/uploads/2014/06/image.jpeg" alt="Miguel Cotto">
+      <div class="card-body">
+        <h3>Miguel Cotto</h3>
+        <p>Campeón mundial en múltiples divisiones.</p>
+      </div>
+    </article>
+
+    <article class="card">
+      <img class="card-image" src="https://images.tapology.com/letterbox_images/184324/default/1427012867.0_edit_5293619646279227.jpg?1683423321" alt="Amanda Serrano">
+      <div class="card-body">
+        <h3>Amanda Serrano</h3>
+        <p>Gigante del boxeo femenino.</p>
+      </div>
+    </article>
+
+    <article class="card">
+      <img class="card-image" src="https://www.vintagedetroit.com/wp-content/uploads/2017/08/pudge-rodriguez-detroit-tigers-catcher-620x400.jpg" alt="Iván Rodríguez">
+      <div class="card-body">
+        <h3>Iván Rodríguez</h3>
+        <p>Salón de la Fama del béisbol.</p>
+      </div>
+    </article>
+  </div>
+</section>
+  <section id="miss">
+  <div class="section-head">
+    <span class="tag">Coronas boricuas</span>
+    <h2>Puerto Rico en Miss Universo</h2>
+    <p>Puerto Rico ha ganado 5 coronas de Miss Universo.</p>
+  </div>
+
+  <div class="grid two three">
+    <article class="card">
+      <img class="card-image img-marisol" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLauz_yIsaIaOw5LLoUlYeMGhyIONCTVYmeg&s" alt="Marisol Malaret">
+      <div class="card-body">
+        <h3>Marisol Malaret</h3>
+        <p>Miss Universo 1970. La primera corona de Puerto Rico.</p>
+      </div>
+    </article>
+
+    <article class="card">
+      <img class="card-image img-deborah" src="https://upload.wikimedia.org/wikipedia/commons/2/26/Miss_Universe_1985.jpg" alt="Deborah Carthy-Deu">
+      <div class="card-body">
+        <h3>Deborah Carthy-Deu</h3>
+        <p>Miss Universo 1985. Segunda corona para Puerto Rico.</p>
+      </div>
+    </article>
+
+    <article class="card">
+      <img class="card-image" src="https://www.primerahora.com/resizer/v2/KL2NQLDIVRCJHA373YYEUUIP4Q.JPG?auth=3fe1c7d3ebc6c2dba5e46ce2aab10d6b2d37d5e7ed9b8516cd2c94cada6982c3&quality=75&width=2560&focal=2783%2C1755" alt="Dayanara Torres">
+      <div class="card-body">
+        <h3>Dayanara Torres</h3>
+        <p>Miss Universo 1993. Una de las reinas boricuas más recordadas.</p>
+      </div>
+    </article>
+
+    <article class="card">
+      <img class="card-image img-denise" src="https://cloudfront-us-east-1.images.arcpublishing.com/gfrmedia/VAC4WDV4Z5DRLLRPSD6IMHSCDI.jpg" alt="Denise Quiñones">
+      <div class="card-body">
+        <h3>Denise Quiñones</h3>
+        <p>Miss Universo 2001. Ganó la corona en Puerto Rico.</p>
+      </div>
+    </article>
+
+    <article class="card">
+      <img class="card-image" src="https://www.billboard.com/wp-content/uploads/media/Zuleyka-Rivera-despacito-billboard-1548.jpg" alt="Zuleyka Rivera">
+      <div class="card-body">
+        <h3>Zuleyka Rivera</h3>
+        <p>Miss Universo 2006. Quinta corona boricua.</p>
+      </div>
+    </article>
+
+    <article class="card">
+      <img class="card-image" src="https://www.univision.com/_next/image?url=https%3A%2F%2Fst1.uvnimg.com%2F8f%2Fe6%2Fc0024ab34abbb82dd1bb5e40e000%2Fchiliseo.jpg&w=1280&q=75" alt="Corona de Miss Universo">
+      <div class="card-body">
+        <h3>Dato boricua</h3>
+        <p>Puerto Rico es una potencia en certámenes de belleza, música, deportes y talento artístico.</p>
+      </div>
+    </article>
+  </div>
+</section>
+  <section id="palabras"><div class="section-head"><span class="tag">Diccionario rápido</span><h2>Palabras boricuas básicas</h2></div><div class="grid two four"><article class="card mini-card"><h3>Wepa</h3><p>Expresión de alegría.</p></article><article class="card mini-card"><h3>Brutal</h3><p>Algo muy bueno.</p></article><article class="card mini-card"><h3>Chévere</h3><p>Cool o agradable.</p></article><article class="card mini-card"><h3>Pana</h3><p>Amigo.</p></article><article class="card mini-card"><h3>Corillo</h3><p>Grupo de amigos.</p></article><article class="card mini-card"><h3>Janguear</h3><p>Salir a compartir.</p></article><article class="card mini-card"><h3>Guagua</h3><p>Bus o vehículo grande.</p></article><article class="card mini-card"><h3>Bregar</h3><p>Resolver o manejar algo.</p></article></div></section>
+  <section id="tradiciones"><div class="section-head"><span class="tag">Costumbres</span><h2>Tradiciones boricuas</h2></div><div class="grid two three"><article class="card"><div class="card-body"><h3>Navidad boricua</h3><p>Larga, alegre y familiar.</p></div></article><article class="card"><div class="card-body"><h3>Parrandas</h3><p>Visitas musicales sorpresa en Navidad.</p></div></article><article class="card"><div class="card-body"><h3>Día de Reyes</h3><p>Celebración importante para niños y familias.</p></div></article><article class="card"><div class="card-body"><h3>Fiestas patronales</h3><p>Cada pueblo celebra con música y comida.</p></div></article><article class="card"><div class="card-body"><h3>Noche de San Juan</h3><p>Tradición de ir al agua a medianoche.</p></div></article><article class="card"><div class="card-body"><h3>Calle San Sebastián</h3><p>Festival cultural enorme en San Juan.</p></div></article></div></section>
+
+  <section id="mapa">
+    <div class="section-head"><span class="tag">Mapa real</span><h2>Mapa interactivo de Puerto Rico</h2><p>Selecciona un pueblo en la lista. El mapa real hará zoom y pondrá un pin en la ubicación aproximada del municipio.</p></div>
+    <div class="map-wrap">
+      <div class="map-toolbar"><input class="search" id="townSearch" type="search" placeholder="Buscar pueblo... Ej. San Juan, Cayey, Cabo Rojo"><button class="btn btn-primary" type="button" onclick="selectTown('San Juan')">Ver San Juan</button></div>
+      <div class="map-layout">
+        <div><div id="prMap"></div><div id="municipioGrid" class="municipio-grid"></div></div>
+        <aside class="town-panel" id="townPanel"><h3>Selecciona un pueblo</h3><p class="region">Puerto Rico 🇵🇷</p><p>Busca un municipio o tócalo en la lista para ver ideas de qué visitar. El pin aparecerá en el mapa.</p></aside>
+      </div>
+    </div>
+  </section>
+
+  <section id="chat"><div class="section-head"><span class="tag">Chat local</span><h2>Pregúntale al Boricua Bot</h2><p>Chatbot local, Responde sobre Puerto Rico.</p></div><div class="chat-shell"><div class="chat-header"><h3>🇵🇷 Boricua Bot</h3><p>Pregúntame por comida, playas, artistas, salsa, reggaetón, deportistas, Miss Universo, pueblos, turismo o palabras boricuas.</p></div><div class="chat-messages" id="chatMessages"><div class="msg bot">¡Wepa, mi pana! Soy tu Boricua Bot. Pregúntame algo sobre Puerto Rico y te contesto claro y con flow boricua.</div></div><div class="suggestions"><button class="suggestion" onclick="askSuggestion('¿Qué comidas debo probar?')">Comidas</button><button class="suggestion" onclick="askSuggestion('¿Qué playas recomiendas?')">Playas</button><button class="suggestion" onclick="askSuggestion('¿Qué artistas famosos son de Puerto Rico?')">Artistas</button><button class="suggestion" onclick="askSuggestion('¿Qué deportistas boricuas son importantes?')">Deportistas</button><button class="suggestion" onclick="askSuggestion('¿Cuántas coronas de Miss Universo tiene Puerto Rico?')">Miss Universo</button><button class="suggestion" onclick="askSuggestion('¿Qué significa chinchorrear?')">Chinchorrear</button></div>
+  
+  <div class="chat-input-area">
+  <input id="chatInput" type="text" placeholder="Escribe tu pregunta...">
+  <button class="send-btn" onclick="sendMessage()">Enviar</button>
+</div>
+
+<div class="chatgpt-helper">
+  <button class="chatgpt-btn" onclick="openChatGPTWithQuestion()">
+    Abrir ChatGPT con mi pregunta
+  </button>
+</div>
+  </div>
+  
+  </section>
+  <footer class="footer">Hecho con cariño boricua 🇵🇷</footer>
+</div>
+
+<script>
+const townData = {
+"Adjuntas":{c:[18.1635,-66.7221],r:"Centro / Montaña",v:["Bosque Guilarte","Lago Garzas","Hacienda Tres Ángeles","Plaza pública"],n:"Conocido por clima fresco, café y naturaleza de montaña."},
+"Aguada":{c:[18.3794,-67.1882],r:"Oeste",v:["Balneario Pico de Piedra","Museo de Aguada","Ermita de Espinar","Costa oeste"],n:"Pueblo costero con historia y ambiente tranquilo."},
+"Aguadilla":{c:[18.4275,-67.1541],r:"Oeste",v:["Crash Boat","Punta Borinquen","Ruinas del Faro","Surfer's Beach"],n:"Ideal para playa, surf, fotos y atardeceres."},
+"Aguas Buenas":{c:[18.2569,-66.1029],r:"Centro",v:["Cuevas de Aguas Buenas","Plaza pública","Miradores","Área montañosa"],n:"Un pueblo de montaña cerca del área metro."},
+"Aibonito":{c:[18.1397,-66.2660],r:"Centro / Montaña",v:["Festival de las Flores","Mirador Piedra Degetau","Casa Museo Federico Degetau","Ruta panorámica"],n:"Famoso por clima fresco y flores."},
+"Añasco":{c:[18.2827,-67.1396],r:"Oeste",v:["Balneario Tres Hermanos","Río Grande de Añasco","Plaza pública","Costa oeste"],n:"Pueblo costero con historia en el oeste."},
+"Arecibo":{c:[18.4724,-66.7157],r:"Norte",v:["Cueva del Indio","Faro de Arecibo","La Poza del Obispo","Río Tanamá"],n:"Combina costa, cuevas, ríos y aventura."},
+"Arroyo":{c:[17.9658,-66.0610],r:"Sur",v:["Malecón de Arroyo","Playa Punta Guilarte","Tren del Sur","Plaza pública"],n:"Pueblo sureño con ambiente costero."},
+"Barceloneta":{c:[18.4505,-66.5380],r:"Norte",v:["Premium Outlets","Playa Las Criollas","Área costera","Río Grande de Manatí"],n:"Conocido por compras y costa norte."},
+"Barranquitas":{c:[18.1866,-66.3063],r:"Centro",v:["Cañón San Cristóbal","Casa Museo Luis Muñoz Rivera","Miradores","Ruta de montaña"],n:"Montaña, historia y paisajes verdes."},
+"Bayamón":{c:[18.3986,-66.1557],r:"Metro",v:["Parque de las Ciencias","Museo de Arte de Bayamón","Paseo Lineal","Plaza del Sol"],n:"Ciudad grande del área metropolitana."},
+"Cabo Rojo":{c:[18.0866,-67.1457],r:"Oeste",v:["Faro Los Morrillos","La Playuela / Playa Sucia","Buyé","Combate","Salinas de Cabo Rojo"],n:"Uno de los mejores pueblos para playas y atardeceres."},
+"Caguas":{c:[18.2341,-66.0485],r:"Centro / Metro",v:["Jardín Botánico","Museo del Tabaco","Centro Criollo de Ciencia y Tecnología","Plaza Santiago R. Palmer"],n:"Conocido como el corazón criollo."},
+"Camuy":{c:[18.4838,-66.8449],r:"Norte",v:["Cavernas del Río Camuy","Playa Peñón Brusi","Hacienda Morell","Costa norte"],n:"Famoso por sus cavernas y paisajes naturales."},
+"Canóvanas":{c:[18.3749,-65.8993],r:"Este",v:["Hipódromo Camarero","Entrada hacia El Yunque","Áreas rurales","Rutas gastronómicas"],n:"Puerta hacia naturaleza y zona este."},
+"Carolina":{c:[18.3808,-65.9574],r:"Metro / Este",v:["Isla Verde","Balneario de Carolina","Piñones cerca","Museo del Niño"],n:"Playas turísticas y cercanía al aeropuerto."},
+"Cataño":{c:[18.4413,-66.1182],r:"Metro",v:["Bahía de San Juan","Casa Bacardí","Paseo marítimo","Lancha hacia Viejo San Juan"],n:"Buen punto para vistas de San Juan."},
+"Cayey":{c:[18.1119,-66.1660],r:"Centro / Montaña",v:["Guavate","Ruta del lechón","Bosque de Carite","Miradores de montaña","Plaza Pública Ramon Frade","La casa historica de la música"],n:"Famoso por comida criolla, lechón y clima fresco."},
+"Ceiba":{c:[18.2641,-65.6485],r:"Este",v:["Terminal de ferry","Playa Los Machos","Medio Mundo","Acceso a Vieques y Culebra"],n:"Clave para viajar a las islas municipio."},
+"Ciales":{c:[18.3361,-66.4682],r:"Centro",v:["Museo del Café","Ríos y charcos","Montañas","Centro urbano"],n:"Pueblo cafetero y de naturaleza."},
+"Cidra":{c:[18.1764,-66.1613],r:"Centro",v:["Lago de Cidra","Plaza pública","Miradores","Rutas de campo"],n:"Conocida como la ciudad de la eterna primavera."},
+"Coamo":{c:[18.0797,-66.3579],r:"Sur",v:["Baños de Coamo","Plaza pública","Iglesia San Blas","Puente histórico"],n:"Uno de los pueblos más antiguos de Puerto Rico."},
+"Comerío":{c:[18.2180,-66.2260],r:"Centro",v:["Represa de Comerío","Miradores","Río La Plata","Centro urbano"],n:"Pueblo montañoso con vistas verdes."},
+"Corozal":{c:[18.3411,-66.3168],r:"Centro / Norte",v:["Centro histórico","Rutas de campo","Miradores","Plaza pública"],n:"Pueblo tranquilo de montaña cercana al norte."},
+"Culebra":{c:[18.3030,-65.3000],r:"Isla municipio",v:["Playa Flamenco","Tamarindo","Zoni","Cayo Luis Peña"],n:"Famosa por aguas cristalinas y playas hermosas."},
+"Dorado":{c:[18.4589,-66.2677],r:"Norte",v:["Balneario Manuel Morales","Ojo del Buey","Dorado Beach","Restaurantes costeros"],n:"Zona playera y turística del norte."},
+"Fajardo":{c:[18.3258,-65.6524],r:"Este",v:["Seven Seas","Laguna Grande","Reserva Cabezas de San Juan","Icacos"],n:"Perfecto para playa, botes y bioluminiscencia."},
+"Florida":{c:[18.3625,-66.5616],r:"Norte / Centro",v:["Centro urbano","Rutas rurales","Plaza pública","Paisajes del norte"],n:"Es el municipio más pequeño de Puerto Rico."},
+"Guánica":{c:[17.9716,-66.9080],r:"Sur / Oeste",v:["Bosque Seco","Gilligan's Island","Playa Santa","Malecón"],n:"Naturaleza seca, playas y ambiente sureño."},
+"Guayama":{c:[17.9841,-66.1138],r:"Sur",v:["Plaza de Guayama","Casa Cautiño","Bosque de Aguirre","Paseo Tablado","Casa de los pastelillos"],n:"Pueblo histórico del sur con arquitectura hermosa."},
+"Guayanilla":{c:[18.0191,-66.7918],r:"Sur",v:["Bahía de Guayanilla","Ruinas históricas","Plaza pública","Costa sur"],n:"Pueblo sureño con costa e historia."},
+"Guaynabo":{c:[18.3575,-66.1110],r:"Metro",v:["Museo de Transportación","Ruinas de Caparra","San Patricio","Paseos urbanos"],n:"Ciudad metro con historia temprana de la colonización."},
+"Gurabo":{c:[18.2544,-65.9729],r:"Este / Centro",v:["Escalinata de Gurabo","Plaza pública","Rutas de campo","Miradores"],n:"Conocido como el pueblo de las escaleras."},
+"Hatillo":{c:[18.4866,-66.8254],r:"Norte",v:["Festival de las Máscaras","Playa Sardinera","Costa norte","Ganadería local"],n:"Famoso por tradición, leche y máscaras."},
+"Hormigueros":{c:[18.1397,-67.1274],r:"Oeste",v:["Basílica de Monserrate","Plaza pública","Centro histórico","Rutas del oeste"],n:"Pueblo pequeño con tradición religiosa importante."},
+"Humacao":{c:[18.1497,-65.8274],r:"Este",v:["Reserva Natural de Humacao","Palmas del Mar","Punta Santiago","Malecón"],n:"Playas, naturaleza y costa este."},
+"Isabela":{c:[18.5008,-67.0243],r:"Oeste / Norte",v:["Jobos","Pozo de Jacinto","Túnel de Guajataca","Montones"],n:"Playas, surf y vistas del noroeste."},
+"Jayuya":{c:[18.2186,-66.5916],r:"Centro / Montaña",v:["Museo El Cemí","Piedra Escrita","Toro Negro","Café de montaña"],n:"Cultura taína, montaña y café."},
+"Juana Díaz":{c:[18.0525,-66.5066],r:"Sur",v:["Casa Museo de los Santos Reyes","Plaza pública","Ruta de Reyes","Áreas agrícolas"],n:"Famoso por la tradición de los Reyes Magos."},
+"Juncos":{c:[18.2275,-65.9210],r:"Este",v:["Plaza pública","Rutas rurales","Centro urbano","Áreas verdes"],n:"Pueblo del este con ambiente local."},
+"Lajas":{c:[18.0499,-67.0593],r:"Suroeste",v:["La Parguera","Bahía bioluminiscente","Cayos","Malecón"],n:"Ideal para paseos en bote y agua bioluminiscente."},
+"Lares":{c:[18.2947,-66.8771],r:"Oeste / Montaña",v:["Heladería de Lares","Plaza de la Revolución","Museo histórico","Montañas"],n:"Historia, helados famosos y cultura de montaña."},
+"Las Marías":{c:[18.2516,-66.9924],r:"Oeste / Montaña",v:["Rutas cafetaleras","Montañas","Plaza pública","Áreas rurales"],n:"Pueblo cafetalero y tranquilo."},
+"Las Piedras":{c:[18.1852,-65.8738],r:"Este",v:["Plaza pública","Rutas de campo","Cuevas y áreas verdes","Centro urbano"],n:"Pueblo del este con tradición local."},
+"Loíza":{c:[18.4313,-65.8802],r:"Norte / Este",v:["Piñones","Playa Vacía Talega","Bomba y plena","Kioskos"],n:"Centro fuerte de cultura afroboricua y frituras."},
+"Luquillo":{c:[18.3722,-65.7166],r:"Este",v:["Balneario La Monserrate","Kioskos de Luquillo","La Pared","Cerca de El Yunque"],n:"Playa, comida y naturaleza cerca."},
+"Manatí":{c:[18.4275,-66.4921],r:"Norte",v:["Mar Chiquita","Poza de las Mujeres","Hacienda La Esperanza","Playa Los Tubos"],n:"Playas visuales y paisajes del norte."},
+"Maricao":{c:[18.1808,-66.9796],r:"Oeste / Montaña",v:["Bosque de Maricao","Festival del Café","Miradores","Rutas cafetaleras"],n:"Café, montaña y clima fresco."},
+"Maunabo":{c:[18.0072,-65.8993],r:"Sureste",v:["Faro Punta Tuna","Playa Larga","Túnel Vicente Morales","Costa sureste"],n:"Pueblo tranquilo con costa y faro."},
+"Mayagüez":{c:[18.2011,-67.1396],r:"Oeste",v:["Plaza Colón","Zoológico","Litoral","Cervecera de Puerto Rico"],n:"Ciudad grande del oeste, universitaria y cultural."},
+"Moca":{c:[18.3947,-67.1132],r:"Oeste",v:["Museo del Mundillo","Palacete Los Moreau","Plaza pública","Rutas rurales"],n:"Conocido por el mundillo y tradición artesanal."},
+"Morovis":{c:[18.3258,-66.4066],r:"Centro / Norte",v:["Cuevas","Rutas de montaña","Plaza pública","Paisajes verdes"],n:"Pueblo montañoso con ambiente tranquilo."},
+"Naguabo":{c:[18.2116,-65.7349],r:"Este",v:["Malecón de Naguabo","Playa Húcares","Restaurantes de mariscos","Rutas hacia El Yunque"],n:"Famoso por mariscos y costa este."},
+"Naranjito":{c:[18.3008,-66.2449],r:"Centro",v:["Puente Atirantado","Río La Plata","Miradores","Centro urbano"],n:"Montaña cerca del área metro."},
+"Orocovis":{c:[18.2269,-66.3916],r:"Centro",v:["Toro Verde","Ruta panorámica","Restaurantes de montaña","Miradores"],n:"Conocido como el corazón de Puerto Rico."},
+"Patillas":{c:[18.0064,-66.0157],r:"Sureste",v:["Lago de Patillas","Playas del sureste","Rutas escénicas","Restaurantes locales"],n:"Combina costa, lago y montaña."},
+"Peñuelas":{c:[18.0564,-66.7216],r:"Sur",v:["Plaza pública","Rutas rurales","Montañas del sur","Áreas históricas"],n:"Pueblo del sur con paisaje mixto."},
+"Ponce":{c:[18.0111,-66.6141],r:"Sur",v:["Parque de Bombas","Museo de Arte de Ponce","La Guancha","Castillo Serrallés"],n:"La Perla del Sur: arquitectura, arte e historia."},
+"Quebradillas":{c:[18.4738,-66.9385],r:"Norte / Oeste",v:["Guajataca","Mirador","Túnel de Guajataca","Costa rocosa"],n:"Vistas costeras y paisajes del noroeste."},
+"Rincón":{c:[18.3402,-67.2499],r:"Oeste",v:["Domes","Faro de Rincón","Steps Beach","Atardeceres"],n:"Surf, atardeceres y ambiente relajado."},
+"Río Grande":{c:[18.3808,-65.8316],r:"Este",v:["El Yunque","Coco Beach","Río Espíritu Santo","Resorts"],n:"Naturaleza tropical y acceso a El Yunque."},
+"Sabana Grande":{c:[18.0777,-66.9605],r:"Oeste / Sur",v:["Bosque Susúa","Santuario Virgen del Pozo","Plaza pública","Rutas rurales"],n:"Naturaleza y tradición religiosa."},
+"Salinas":{c:[17.9775,-66.2979],r:"Sur",v:["La Paseadora","Bahía de Salinas","Restaurantes de mariscos","Cayos"],n:"Famoso por comida de mar y costa sur."},
+"San Germán":{c:[18.0808,-67.0410],r:"Oeste",v:["Porta Coeli","Centro histórico","Museo de Historia","Calles coloniales"],n:"Uno de los pueblos más históricos de la isla."},
+"San Juan":{c:[18.4655,-66.1057],r:"Metro",v:["Viejo San Juan","El Morro","Castillo San Cristóbal","La Placita","Distrito T-Mobile"],n:"Capital de Puerto Rico: historia, playa, comida y vida urbana."},
+"San Lorenzo":{c:[18.1894,-65.9610],r:"Este / Centro",v:["Plaza pública","Rutas de campo","Charcos","Montañas"],n:"Pueblo de campo en el este central."},
+"San Sebastián":{c:[18.3366,-66.9902],r:"Oeste / Montaña",v:["Gozalandia","Hacienda La Fe","Museo de Historia","Rutas de montaña"],n:"Cascadas, café y naturaleza."},
+"Santa Isabel":{c:[17.9660,-66.4049],r:"Sur",v:["Costa sur","Plaza pública","Áreas agrícolas","Restaurantes locales"],n:"Pueblo agrícola y costero del sur."},
+"Toa Alta":{c:[18.3880,-66.2482],r:"Metro / Norte",v:["Centro urbano","Rutas de campo","Plaza pública","Áreas verdes"],n:"Pueblo cercano al área metropolitana."},
+"Toa Baja":{c:[18.4438,-66.2596],r:"Metro / Norte",v:["Balneario Punta Salinas","Levittown","Costa norte","Paseos urbanos"],n:"Playas y comunidades costeras cerca del metro."},
+"Trujillo Alto":{c:[18.3547,-66.0074],r:"Metro",v:["Lago Carraízo","Rutas gastronómicas","Plaza pública","Áreas verdes"],n:"Cerca del metro, con ambiente de campo."},
+"Utuado":{c:[18.2655,-66.7005],r:"Centro / Montaña",v:["Cañón Blanco","Lago Dos Bocas","Caguana","Río Tanamá"],n:"Montaña, cultura taína, ríos y aventura."},
+"Vega Alta":{c:[18.4122,-66.3316],r:"Norte",v:["Cerro Gordo","Playa Tocones","Bosque costero","Área norte"],n:"Playas tranquilas y naturaleza costera."},
+"Vega Baja":{c:[18.4449,-66.3871],r:"Norte",v:["Puerto Nuevo","Playa Los Tubos","Manantial Tortuguero","Costa norte"],n:"Playas hermosas y ambiente familiar."},
+"Vieques":{c:[18.1263,-65.4400],r:"Isla municipio",v:["Bahía Mosquito","Playa La Chiva","Sun Bay","Fortín Conde de Mirasol"],n:"Famosa por su bahía bioluminiscente y playas naturales."},
+"Villalba":{c:[18.1277,-66.4927],r:"Centro / Sur",v:["Lago Toa Vaca","Miradores","Ruta panorámica","Montañas"],n:"Paisajes de montaña y lago."},
+"Yabucoa":{c:[18.0505,-65.8793],r:"Sureste",v:["Playa Lucía","Punta Yeguas","Valle de Yabucoa","Costa sureste"],n:"Valle, playa y ambiente sureño."},
+"Yauco":{c:[18.0349,-66.8499],r:"Sur / Oeste",v:["Yaucromatic","Plaza pública","Café de Yauco","Montañas"],n:"Famoso por café y arte urbano colorido."}
+};
+
+const allTownNames = Object.keys(townData).sort((a,b)=>a.localeCompare(b));
+const municipioGrid = document.getElementById("municipioGrid");
+const townPanel = document.getElementById("townPanel");
+const townSearch = document.getElementById("townSearch");
+let prMap, townMarker;
+
+function initMap(){
+  prMap = L.map("prMap", { scrollWheelZoom: false });
+
+  const mapaNormal = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution: "&copy; OpenStreetMap"
+  });
+
+  const mapaSatelite = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+    maxZoom: 18,
+    attribution: "Tiles &copy; Esri"
+  });
+
+  mapaSatelite.addTo(prMap);
+
+  L.control.layers(
+    { "Satélite": mapaSatelite, "Mapa normal": mapaNormal },
+    null,
+    { collapsed: true }
+  ).addTo(prMap);
+
+  townMarker = L.marker(townData["San Juan"].c)
+    .addTo(prMap)
+    .bindPopup("<strong>San Juan</strong><br>Capital de Puerto Rico.");
+
+  setTimeout(() => {
+    prMap.invalidateSize();
+    prMap.fitBounds([[17.82, -67.35],[18.62, -65.15]], { padding: [35, 35] });
+  }, 200);
+}
+
+function renderTownButtons(filter=""){
+  const q = normalizeTownText(filter);
+  municipioGrid.innerHTML = "";
+  allTownNames.filter(n => normalizeTownText(n).includes(q)).forEach(name => {
+    const b = document.createElement("button");
+    b.className = "town-btn";
+    b.textContent = name;
+    b.onclick = () => selectTown(name);
+    municipioGrid.appendChild(b);
+  });
+}
+
+function selectTown(name){
+  const t = townData[name];
+  if(!t) return;
+
+  document.querySelectorAll(".town-btn").forEach(b => b.classList.toggle("active", b.textContent === name));
+
+  townPanel.innerHTML = `<h3>${name}</h3><p class="region">${t.r}</p><p>${t.n}</p><ul class="visit-list">${t.v.map(x=>`<li>📍 ${x}</li>`).join("")}</ul><p><strong>Mapa:</strong> el pin marca la ubicación aproximada de ${name}.</p>`;
+
+  if(prMap && townMarker){
+    townMarker.setLatLng(t.c).bindPopup(`<strong>${name}</strong><br>${t.r}`).openPopup();
+    prMap.setView(t.c,12,{animate:true});
+  }
+}
+
+function normalizeTownText(text){
+  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+}
+
+function findTownFromSearch(value){
+  const search = normalizeTownText(value);
+  if(!search) return null;
+
+  const exactMatch = allTownNames.find(name => normalizeTownText(name) === search);
+  if(exactMatch) return exactMatch;
+
+  const partialMatches = allTownNames.filter(name => normalizeTownText(name).includes(search));
+  if(partialMatches.length === 1) return partialMatches[0];
+
+  return null;
+}
+
+function searchTownFromInput(){
+  const townName = findTownFromSearch(townSearch.value);
+  if(townName) selectTown(townName);
+}
+
+let townSearchTimer;
+
+townSearch.addEventListener("input", e => {
+  renderTownButtons(e.target.value);
+  clearTimeout(townSearchTimer);
+  townSearchTimer = setTimeout(searchTownFromInput, 450);
+});
+
+townSearch.addEventListener("keydown", e => {
+  if(e.key === "Enter"){
+    e.preventDefault();
+    searchTownFromInput();
+  }
+});
+
+renderTownButtons();
+initMap();
+
+const tabs=document.querySelectorAll(".tab-btn"), musicTabs=document.querySelectorAll(".music-tab");
+tabs.forEach(btn=>btn.addEventListener("click",()=>{
+  tabs.forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  musicTabs.forEach(p=>p.classList.toggle("hidden",p.id!==btn.dataset.tab));
+}));
+
+const chatMessages = document.getElementById("chatMessages");
+const chatInput = document.getElementById("chatInput");
+let pendingClarification = null;
+
+const botTopics = [
+ 
+  {keywords:["comida","plato","comer","mofongo","pernil","pasteles","morcilla","gandules"],response:"En Puerto Rico tienes que probar mofongo, el plato navideño boricua con arroz con gandules, pernil, pasteles y morcilla, además de alcapurrias, bacalaítos, pinchos, tripleta, tembleque y quesitos."},
+  {keywords:["playa","playas","mar","flamenco","crash boat","buye","buyé","luquillo","rincon","rincón"],response:"Playas brutales: Flamenco en Culebra, Crash Boat en Aguadilla, Buyé y Combate en Cabo Rojo, Luquillo, Isla Verde, Mar Chiquita y Domes en Rincón."},
+  {keywords:["turismo","visitar","lugares","que ver","qué ver","tour"],response:"Para una primera visita: Viejo San Juan, El Morro, El Yunque, Culebra, Vieques, Cabo Rojo, Rincón, Ponce, Loíza, Guavate y una bahía bioluminiscente."},
+  {keywords:["artista","cantante","musica","música","pop","balada"],response:"Puerto Rico ha dado artistas enormes como Bad Bunny, Ricky Martin, Chayanne, Daddy Yankee, Don Omar, Ivy Queen, Rauw Alejandro, Luis Fonsi, Kany García, Ednita Nazario y Gilberto Santa Rosa."},
+  {keywords:["reggaeton","reggaetón","urbano"],response:"El reggaetón boricua es mundial. Nombres clave: Daddy Yankee, Don Omar, Tego Calderón, Ivy Queen, Wisin & Yandel, Bad Bunny y Rauw Alejandro."},
+  {keywords:["salsa","salsero","hector lavoe","héctor lavoe","gilberto","gran combo","ismael rivera"],response:"En salsa, Puerto Rico es potencia: Héctor Lavoe, Ismael Rivera, Gilberto Santa Rosa, Víctor Manuelle, La India y El Gran Combo."},
+  {keywords:["deporte","deportista","atleta","boxeo","baloncesto","beisbol","béisbol"],response:"Deportistas boricuas importantes: Roberto Clemente, Mónica Puig, Carlos Arroyo, José Juan Barea, Tito Trinidad, Miguel Cotto, Amanda Serrano e Iván Rodríguez."},
+  {keywords:["miss universo","miss universe","corona","reina","zuleyka","dayanara"],response:"Puerto Rico ha ganado 5 coronas de Miss Universo: Marisol Malaret, Deborah Carthy-Deu, Dayanara Torres, Denise Quiñones y Zuleyka Rivera."},
+  {keywords:["boricua","boriken","borikén","borinquen","borinqueño", "borincano"],response:"Boricua es una forma orgullosa de decir puertorriqueño. Viene de Borikén o Borinquen, nombre asociado a la isla antes de la colonización española. También se usan palabras como borinqueño, isleño o jíbaro, según el contexto cultural."},
+  {keywords:["coqui","coquí","ranita","rana","animal tipico","animal típico","sonido coqui","sonido coquí"],response:"El coquí es una ranita pequeña muy famosa en Puerto Rico. Su canto suena como “co-quí” y es uno de los símbolos más queridos de la isla.<br><br><img class='bot-image' src='https://s.yimg.com/ny/api/res/1.2/VSysjPbM.rQqe3IFBwejhA--/YXBwaWQ9aGlnaGxhbmRlcjt3PTEyNDI7aD04Mjg7Y2Y9d2VicA--/https://media.zenfs.com/en/nbc_news_122/c0979925bd4f173818d45d73b68fd74d' alt='Coquí de Puerto Rico'><br>Para muchos boricuas, escuchar un coquí es sentir hogar."},
+  {keywords:["municipios","pueblos","cuantos municipios","cuántos municipios","cuantos pueblos","cuántos pueblos","78 municipios"],response:"Puerto Rico tiene 78 municipios. Mucha gente también les dice pueblos. Cada municipio tiene su propia identidad, fiestas patronales, comida, acento local, lugares turísticos y orgullo comunitario."},
+  {keywords:["capital","san juan","capital de puerto rico"],response:"La capital de Puerto Rico es San Juan. Es una ciudad histórica y moderna a la vez, con lugares como el Viejo San Juan, El Morro, Castillo San Cristóbal, Condado, Santurce y La Placita."},
+  {keywords:["asociacion con estados unidos","asociación con estados unidos","usa","eeuu","estados unidos","relacion con usa","relación con usa","territorio","estado libre asociado","ela"],response:"Puerto Rico es un territorio de Estados Unidos con el nombre oficial de Estado Libre Asociado de Puerto Rico. Las personas nacidas en Puerto Rico son ciudadanas estadounidenses, usan el dólar y pueden viajar a Estados Unidos sin pasaporte, pero Puerto Rico no es un estado y no vota por el presidente en elecciones generales si la persona reside en la isla."},
+  {keywords:["ciudadania","ciudadanía","ciudadanos americanos","pasaporte","puertorriqueños son americanos","boricuas son americanos"],response:"Las personas nacidas en Puerto Rico son ciudadanas estadounidenses. Por eso pueden vivir, trabajar y viajar entre Puerto Rico y Estados Unidos sin visa ni pasaporte estadounidense adicional, aunque para viajar internacionalmente sí usan pasaporte de Estados Unidos."},
+  {keywords:["moneda","dolar","dólar","dinero","que moneda usan","qué moneda usan"],response:"En Puerto Rico se usa el dólar estadounidense. Eso hace que para personas de Estados Unidos sea fácil viajar a la isla sin cambiar moneda."},
+  {keywords:["idioma","idiomas","español","ingles","inglés","que idioma hablan","qué idioma hablan"],response:"En Puerto Rico se habla principalmente español. El inglés también es idioma oficial y se usa en educación, gobierno, turismo y negocios, pero en la vida diaria la mayoría de las conversaciones son en español boricua."},
+  {keywords:["escudo","escudo de puerto rico","escudo pr","escudo boricua","escudo puertorriqueño","escudo puertorriqueno","que significa el escudo","qué significa el escudo"],response:"El escudo de Puerto Rico es uno de los símbolos oficiales más antiguos de la isla y representa parte importante de su historia.<br><br><img class='bot-image' src='https://welcome.topuertorico.org/images/esCudObg.gif' alt='Escudo de Puerto Rico'><br>• El cordero representa a San Juan Bautista, nombre original que los españoles dieron a la isla.<br>• El libro simboliza el Evangelio y la tradición cristiana.<br>• La bandera con la cruz representa la fe cristiana.<br>• Los castillos y leones hacen referencia a Castilla y León, parte de la herencia española.<br>• La corona representa la antigua relación con la monarquía española.<br>• La frase “Joannes Est Nomen Eius” significa “Juan es su nombre”.<br><br>El escudo mezcla elementos religiosos, históricos y coloniales, y ayuda a entender la identidad histórica de Puerto Rico."},
+  {keywords:["isla del encanto","por que isla del encanto","por qué isla del encanto"],response:"A Puerto Rico se le llama la Isla del Encanto por sus playas, montañas, música, comida, historia y la calidez de su gente. Es una forma cariñosa de resaltar lo especial y diverso que es el país."},
+  {keywords:["tamaño","tamano","cuanto mide","cuánto mide","extension","extensión","area","área"],response:"Puerto Rico es una isla pequeña, pero con mucha diversidad. En pocas horas puedes pasar de playa a montaña, de ciudad a campo, o de lugares históricos a bosques tropicales. Se dice que Puerto Rico mide 100 x 35 aunque la realidad es que mide aproximadamente 110-112 millas de largo y 35-40 millas de ancho, superando el tradicionalmente conocido 100 x 35. "},
+  {keywords:["regiones","regiones turisticas","regiones turísticas","zonas de puerto rico","norte sur este oeste centro"],response:"Puerto Rico se puede entender por regiones: norte, sur, este, oeste, centro y metro. El norte tiene mucha costa y ciudad; el sur tiene historia y calor; el este conecta con El Yunque y las islas; el oeste tiene playas y atardeceres; el centro tiene montaña, café y clima fresco."},
+  {keywords:["colombia y puerto rico","puerto rico y colombia","comparar colombia","comparacion colombia pr","comparación colombia pr"],response:"Puerto Rico y Colombia comparten sabor caribeño, música, familia y alegría, pero son diferentes. Colombia es un país grande y diverso con muchas regiones; Puerto Rico es una isla caribeña más pequeña, con fuerte mezcla taína, africana y española, y una relación política especial con Estados Unidos."},
+  {keywords:["diferencia colombia puerto rico","diferencias entre colombia y puerto rico","colombia vs puerto rico"],response:"Una diferencia grande es el tamaño: Colombia es un país continental enorme, mientras Puerto Rico es una isla pequeña. Colombia usa el peso colombiano; Puerto Rico usa el dólar estadounidense. Colombia tiene muchas regiones como Andes, Caribe, Pacífico y Amazonía; Puerto Rico concentra playa, montaña y ciudad en distancias cortas."},
+  {keywords:["comida colombia puerto rico","comida de colombia y puerto rico","diferencia comida colombia pr"],response:"La comida colombiana y la boricua son bien sabrosas, pero distintas. En Colombia se ven platos como bandeja paisa, arepas, ajiaco y sancocho. En Puerto Rico destacan el mofongo, arroz con gandules, pernil, pasteles, alcapurrias, bacalaítos, pinchos y tripleta."},
+  {keywords:["musica colombia puerto rico","música colombia puerto rico","diferencia musica colombia pr"],response:"Colombia tiene géneros como vallenato, cumbia, salsa caleña, música popular y reggaetón colombiano. Puerto Rico es muy fuerte en salsa, bomba, plena, reggaetón, trap latino, pop y música navideña. Ambos países tienen música muy alegre y bailable."},
+  {keywords:["playas colombia puerto rico","playas de colombia y puerto rico"],response:"Colombia tiene playas hermosas en lugares como Cartagena, Santa Marta, San Andrés y el Caribe colombiano. Puerto Rico, al ser una isla más pequeña, tiene playas por casi todos lados, como Flamenco, Crash Boat, Buyé, Luquillo, Mar Chiquita y Domes."},
+  {keywords:["acento colombiano y boricua","acento puerto rico colombia","boricua colombiano"],response:"El acento boricua suele ser más caribeño, rápido y con expresiones como “wepa”, “brutal”, “pana” y “janguear”. Colombia tiene muchos acentos según la región: paisa, costeño, rolo, valluno, santandereano, entre otros."},
+  {keywords:["navidad colombia puerto rico","navidad boricua colombiana"],response:"La Navidad en Puerto Rico y Colombia es bien familiar, pero la boricua es famosa por ser larguísima. En Puerto Rico hay parrandas, plena, aguinaldos, arroz con gandules, pernil, pasteles y Día de Reyes. En Colombia son muy importantes las novenas, buñuelos, natilla y reuniones familiares."},
+  {keywords:["comida","comidas","plato","platos","comida tipica","comida típica","gastronomia","gastronomía","que comer","qué comer"],response:"La comida puertorriqueña mezcla raíces taínas, africanas y españolas. Usa mucho sofrito, arroz, habichuelas, plátano, cerdo, ajo, sazón y frituras. Algunos clásicos son mofongo, arroz con gandules, pernil, pasteles, alcapurrias, bacalaítos, pinchos, tripleta, tembleque y arroz con dulce."},
+  {keywords:["mofongo","plato mofongo","que es mofongo","qué es mofongo"],response:"El mofongo es uno de los platos más famosos de Puerto Rico. Se hace con plátano verde frito y majado con ajo, aceite y chicharrón. Puede servirse con pollo, carne, camarones, mariscos o caldo."},
+  {keywords:["arroz con gandules","gandules","arroz navideño","arroz navideno"],response:"El arroz con gandules es uno de los platos más clásicos de Puerto Rico. Se prepara con arroz, gandules, sofrito, sazón y muchas veces cerdo. Es casi obligatorio en Navidad y celebraciones familiares."},
+  {keywords:["pernil","cerdo asado","lechon","lechón","pernil boricua"],response:"El pernil es cerdo asado, usualmente bien sazonado con ajo, orégano y otros condimentos. En Puerto Rico es típico en Navidad, cumpleaños, fiestas familiares y chinchorreos."},
+  {keywords:["pasteles","pastel boricua","pasteles puertorriqueños","pasteles navidad"],response:"Los pasteles puertorriqueños son parecidos a un tamal caribeño. Se hacen con masa de guineo, yautía o plátano, se rellenan con carne y se envuelven en hoja. Son muy típicos en Navidad."},
+  {keywords:["morcilla","morcillas","morcilla boricua"],response:"La morcilla boricua es un embutido hecho tradicionalmente con sangre, arroz y especias. Suele servirse en fiestas, lechoneras y platos navideños junto con arroz con gandules, pernil y pasteles."},
+  {keywords:["alcapurria","alcapurrias","que es alcapurria","qué es alcapurria"],response:"La alcapurria es una fritura puertorriqueña hecha con masa de guineo verde, yautía o plátano, rellena de carne, jueyes u otros ingredientes. Es crujiente por fuera, sabrosa por dentro y muy común en kioskos y playas."},
+  {keywords:["bacalaito","bacalaitos","bacalaíto","bacalaítos","que es bacalaito","qué es bacalaíto"],response:"El bacalaíto es una fritura fina y crujiente hecha con una mezcla de harina, bacalao y condimentos. Es muy popular en playas, kioskos y chinchorros. Un buen bacalaíto debe quedar doradito y crujiente."},
+  {keywords:["relleno","rellenos","relleno de papa","rellenos de papa","papa rellena"],response:"El relleno de papa es una fritura hecha con papa majada, usualmente rellena de carne molida sazonada. Se fríe hasta quedar doradito por fuera y suave por dentro. Es un clásico de cafeterías, panaderías y kioskos."},
+  {keywords:["sorullo","sorullos","sorullito","sorullitos","sorullo de maiz","sorullo de maíz"],response:"El sorullo o sorullito es una fritura hecha con harina de maíz. Puede ser dulce o salado, y muchas veces se come con queso o salsa. Es crujiente por fuera y suave por dentro."},
+  {keywords:["pastelillo","pastelillos","empanadilla","empanadillas","turnover boricua"],response:"En Puerto Rico mucha gente dice pastelillo o empanadilla, dependiendo del área. Es una masa frita rellena de carne, pollo, pizza, queso, mariscos o jueyes. Es una de las frituras más comunes en playas, kioskos y cafeterías."},
+  {keywords:["pincho","pinchos","pincho boricua","pinchos puerto rico"],response:"El pincho boricua es carne en palito, usualmente pollo o cerdo, asada y servida con pan y salsa. Se consigue mucho en carreteras, fiestas, playas y chinchorros."},
+  {keywords:["tripleta","sandwich tripleta","sándwich tripleta"],response:"La tripleta es un sándwich puertorriqueño cargado con varias carnes, papitas, ensalada y salsas. Es comida de calle, contundente y perfecta para cuando tienes mucha hambre."},
+  {keywords:["chuleta can can","chuleta kan kan","can can","kan kan"],response:"La chuleta Can Can es una chuleta de cerdo grande que incluye carne, costilla, grasa y cuerito. Se fríe o cocina hasta que el cuerito quede crujiente. Es un plato bien llamativo y boricua."},
+  {keywords:["tembleque","postre tembleque","tembleque de coco"],response:"El tembleque es un postre puertorriqueño hecho con leche de coco, azúcar y especias. Es suave, frío y se mueve un poco como gelatina, por eso se llama tembleque."},
+  {keywords:["arroz con dulce","postre arroz con dulce"],response:"El arroz con dulce es un postre típico de Puerto Rico hecho con arroz, leche de coco, canela, clavos y azúcar. Es muy común en Navidad y reuniones familiares."},
+  {keywords:["quesito","quesitos","quesito boricua"],response:"El quesito es un dulce de panadería muy popular en Puerto Rico. Es hojaldre relleno de queso crema dulce, a veces con azúcar por encima. Va perfecto con café."},
+  {keywords:["coquito","bebida navidad","bebida navideña","bebida navidena"],response:"El coquito es una bebida navideña puertorriqueña hecha con coco, leche, especias y muchas veces ron. Es cremoso, dulce y muy típico en las fiestas de Navidad."},
+  {keywords:["politica","política","partidos politicos","partidos políticos","estatus","estadidad","independencia","libre asociacion","libre asociación"],response:"En Puerto Rico la política suele girar mucho alrededor del estatus político de la isla. Las corrientes principales son: estadidad, que busca que Puerto Rico sea estado de Estados Unidos; independencia, que busca que Puerto Rico sea un país soberano; y soberanía o libre asociación, que propone una relación negociada con Estados Unidos con más autonomía."},
+  {keywords:["estadidad","anexion","anexión","estado 51","statehood"],response:"La estadidad es la postura que propone que Puerto Rico se convierta en un estado de Estados Unidos, con representación completa en el Congreso y voto presidencial para los residentes de la isla."},
+  {keywords:["independencia","independentismo","pais soberano","país soberano"],response:"La independencia es la postura que propone que Puerto Rico sea un país soberano, con control total sobre sus leyes, relaciones internacionales, ciudadanía, moneda y decisiones nacionales."},
+  {keywords:["libre asociacion","libre asociación","soberania","soberanía","ela soberano"],response:"La libre asociación o soberanía propone que Puerto Rico tenga más autonomía y una relación negociada con Estados Unidos. Bajo esa idea, Puerto Rico tendría más control propio, pero podría mantener acuerdos con Estados Unidos en áreas específicas."},
+  {keywords:["pnp","partido nuevo progresista"],response:"El Partido Nuevo Progresista, conocido como PNP, tradicionalmente defiende la estadidad para Puerto Rico. Sus posturas principales suelen enfocarse en la unión permanente con Estados Unidos como estado."},
+  {keywords:["ppd","partido popular democratico","partido popular democrático"],response:"El Partido Popular Democrático, conocido como PPD, ha estado históricamente asociado con la defensa del Estado Libre Asociado, aunque dentro del partido existen diferentes visiones sobre el futuro político de Puerto Rico."},
+  {keywords:["pip","partido independentista","partido independentista puertorriqueño"],response:"El Partido Independentista Puertorriqueño, conocido como PIP, defiende la independencia de Puerto Rico y promueve que la isla sea un país soberano."},
+  {keywords:["mvc","movimiento victoria ciudadana","victoria ciudadana"],response:"El Movimiento Victoria Ciudadana, conocido como MVC, es un partido político más reciente que suele hablar de cambios en gobernanza, justicia social, transparencia y nuevas formas de hacer política. Dentro de sus miembros pueden existir distintas visiones sobre el estatus."},
+  {keywords:["proyecto dignidad","dignidad"],response:"Proyecto Dignidad es un partido político de Puerto Rico que suele enfocarse en valores conservadores, temas de familia, vida, gobierno y asuntos sociales. Su presencia ha aumentado en debates políticos recientes."},
+  {keywords:["tainos","taínos","taino","taíno","cultura taina","cultura taína","indigenas","indígenas"],response:"Los taínos eran los habitantes indígenas de Puerto Rico antes de la llegada de los españoles. Su legado vive en palabras, comidas, nombres de lugares, símbolos y elementos culturales de la identidad boricua."},
+  {keywords:["africana","afroboricua","afroboricuas","loiza","loíza","bomba"],response:"La herencia africana es esencial en Puerto Rico. Se nota en la música, la comida, el baile, la espiritualidad, el lenguaje y tradiciones como la bomba. Loíza es uno de los pueblos más reconocidos por su cultura afroboricua."},
+  {keywords:["española","espanola","herencia española","colonizacion","colonización"],response:"La herencia española en Puerto Rico se ve en el idioma, la religión, la arquitectura colonial, los apellidos, la comida y ciudades históricas como el Viejo San Juan, San Germán y Ponce."},
+  {keywords:["mezcla cultural","taina africana española","taína africana española","raices","raíces"],response:"La cultura puertorriqueña nace de una mezcla taína, africana y española, con influencias caribeñas y estadounidenses. Esa mezcla se nota en la comida, música, lenguaje, religión, fiestas y forma de vivir."},
+  {keywords:["viejo san juan","adoquines","calles de colores","casas de colores"],response:"El Viejo San Juan es una zona histórica llena de calles adoquinadas, edificios coloridos, murallas, plazas, restaurantes y fortalezas. Es uno de los lugares más bonitos y fotogénicos de Puerto Rico."},
+  {keywords:["el morro","castillo san felipe","fortaleza el morro"],response:"El Morro, oficialmente Castillo San Felipe del Morro, es una fortaleza histórica en San Juan construida para defender la bahía. Es uno de los monumentos más reconocidos de Puerto Rico."},
+  {keywords:["san cristobal","san cristóbal","castillo san cristobal","castillo san cristóbal"],response:"El Castillo San Cristóbal es otra fortaleza histórica de San Juan. Fue parte del sistema defensivo español y es uno de los lugares más importantes para entender la historia colonial de Puerto Rico."},
+  {keywords:["el yunque","yunque","bosque tropical","rainforest","cascadas"],response:"El Yunque es el bosque tropical más famoso de Puerto Rico. Tiene senderos, cascadas, ríos, miradores y mucha vegetación. Es uno de los mejores lugares para ver la naturaleza de la isla."},
+  {keywords:["bahia bioluminiscente","bahía bioluminiscente","bioluminiscencia","bio bay","mosquito bay"],response:"Puerto Rico tiene bahías bioluminiscentes donde el agua puede brillar de noche por microorganismos. Las más conocidas están en Vieques, Fajardo y Lajas. La de Vieques es una de las más famosas del mundo."},
+  {keywords:["culebra","flamenco","playa flamenco","isla culebra"],response:"Culebra es una isla municipio de Puerto Rico famosa por Playa Flamenco, aguas cristalinas y un ambiente tranquilo. Es ideal para playa, snorkel y escaparse del ruido."},
+  {keywords:["vieques","bahia mosquito","bahía mosquito","la chiva","sun bay"],response:"Vieques es una isla municipio conocida por sus playas naturales, caballos en libertad y la Bahía Mosquito, una bahía bioluminiscente muy famosa. Es perfecta para una experiencia más relajada y natural."},
+  {keywords:["cayey","guavate","carite"],response:"Cayey es un pueblo de montaña conocido por su clima fresco, Guavate, la Ruta del Lechón, el Bosque de Carite y sus paisajes verdes. Es un lugar excelente para comer comida criolla."},
+  {keywords:["ponce","perla del sur","parque de bombas","castillo serralles","castillo serrallés"],response:"Ponce es conocida como la Perla del Sur. Tiene arquitectura histórica, el Parque de Bombas, el Museo de Arte de Ponce, la Plaza Las Delicias y el Castillo Serrallés."},
+  {keywords:["rincon","rincón","surf","atardecer","domes"],response:"Rincón es famoso por el surf, los atardeceres y un ambiente relajado. Playas como Domes y Steps son muy conocidas. Es uno de los mejores lugares para ver el sunset en Puerto Rico."},
+  {keywords:["cabo rojo","faro cabo rojo","playuela","playa sucia","salinas","combate","buye","buyé"],response:"Cabo Rojo es uno de los pueblos más bellos del oeste. Tiene el Faro Los Morrillos, La Playuela o Playa Sucia, las Salinas, Buyé, Combate y atardeceres espectaculares."},
+  {keywords:["loiza","loíza","piñones","pinones","afroboricua","vacía talega","vacia talega"],response:"Loíza es un pueblo importantísimo para la cultura afroboricua. Es conocido por bomba, plena, tradición, máscaras, Piñones, frituras y playas como Vacía Talega."},
+  {keywords:["lajas","la parguera","parguera","cayos","bio bay lajas"],response:"Lajas es conocido por La Parguera, los cayos, paseos en bote y su bahía bioluminiscente. Es un lugar popular para janguear, comer y disfrutar del agua."},
+  {keywords:["musica","música","generos","géneros","salsa","reggaeton","reggaetón","bomba","plena"],response:"Puerto Rico tiene una cultura musical enorme. Es clave en salsa, bomba, plena, reggaetón, trap latino, pop, balada y música navideña. La música boricua se escucha en fiestas, carros, casas, playas y chinchorros."},
+  {keywords:["salseros","hector lavoe","héctor lavoe","gilberto santa rosa","gran combo","victor manuelle","víctor manuelle"],response:"Puerto Rico es potencia en salsa. Algunos nombres importantes son Héctor Lavoe, Ismael Rivera, Cheo Feliciano, Gilberto Santa Rosa, Víctor Manuelle, Frankie Ruiz y El Gran Combo de Puerto Rico."},
+  {keywords:["bomba","baile bomba","tambor bomba"],response:"La bomba es un género afroboricua donde el tambor y el baile conversan. La persona que baila marca movimientos y el tambor responde. Es una expresión profunda de identidad, resistencia y cultura."},
+  {keywords:["plena","panderos","periodico cantado","periódico cantado"],response:"La plena es música tradicional puertorriqueña conocida como el periódico cantado, porque históricamente contaba noticias e historias del pueblo. Usa panderos y tiene un ritmo alegre y narrativo."},
+  {keywords:["cuatro","cuatro puertorriqueño","instrumento tipico","instrumento típico","musica jibara","música jíbara"],response:"El cuatro puertorriqueño es un instrumento de cuerda típico de la música jíbara. Es muy importante en la música navideña, aguinaldos y tradiciones rurales de Puerto Rico."},
+  {keywords:["fiestas patronales","patronales","fiesta de pueblo"],response:"Las fiestas patronales son celebraciones de cada municipio en honor a su santo patrón. Suelen tener música, comida, machinas, artesanos, juegos y mucho ambiente de pueblo."},
+  {keywords:["noche de san juan","san juan noche","tirarse de espalda","tirarse de espaldas"],response:"La Noche de San Juan se celebra el 23 de junio. Una tradición popular es ir a la playa o piscina y tirarse de espaldas al agua a medianoche como símbolo de renovación y buena suerte."},
+  {keywords:["calle san sebastian","calle san sebastián","san se","festival san sebastian","festival san sebastián"],response:"Las Fiestas de la Calle San Sebastián, conocidas como SanSe, son una de las celebraciones culturales más grandes de Puerto Rico. Se celebran en el Viejo San Juan con música, arte, comida y mucha gente."},
+  {keywords:["roberto clemente","clemente"],response:"Roberto Clemente fue una leyenda del béisbol nacida en Puerto Rico. Además de su talento deportivo, es recordado por su labor humanitaria y por representar con orgullo a los boricuas."},
+  {keywords:["monica puig","mónica puig","oro olimpico","oro olímpico","tenis"],response:"Mónica Puig hizo historia al ganar la primera medalla de oro olímpica para Puerto Rico en tenis en Río 2016. Es una de las figuras deportivas más importantes de la isla."},
+  {keywords:["tito trinidad","felix trinidad","félix trinidad"],response:"Félix “Tito” Trinidad es uno de los boxeadores más queridos de Puerto Rico. Fue campeón mundial y sus peleas paralizaban la isla."},
+  {keywords:["miguel cotto","cotto"],response:"Miguel Cotto es uno de los boxeadores puertorriqueños más importantes. Fue campeón mundial en varias divisiones y representó a Puerto Rico en escenarios grandes del boxeo."},
+  {keywords:["amanda serrano","serrano"],response:"Amanda Serrano es una campeona de boxeo puertorriqueña reconocida mundialmente. Es una de las atletas más dominantes en la historia del boxeo femenino."},
+  {keywords:["jose juan barea","josé juan barea","jj barea","barea"],response:"José Juan Barea es un baloncelista puertorriqueño que jugó en la NBA y fue campeón con los Dallas Mavericks. Es muy querido por su entrega y orgullo boricua."},
+  {keywords:["carlos arroyo","arroyo baloncesto"],response:"Carlos Arroyo es una figura importante del baloncesto boricua. Fue clave en la selección de Puerto Rico y también jugó profesionalmente fuera de la isla."},
+  {keywords:["marisol malaret"],response:"Marisol Malaret fue Miss Universo 1970 y la primera puertorriqueña en ganar esa corona. Su triunfo fue un momento histórico para Puerto Rico."},
+  {keywords:["deborah carthy deu","deborah carthy-deu"],response:"Deborah Carthy-Deu ganó Miss Universo 1985, convirtiéndose en la segunda puertorriqueña en obtener la corona."},
+  {keywords:["dayanara torres","dayanara"],response:"Dayanara Torres ganó Miss Universo 1993. Es una de las reinas boricuas más recordadas y queridas."},
+  {keywords:["denise quinones","denise quiñones","denise"],response:"Denise Quiñones ganó Miss Universo 2001 en Puerto Rico, lo que hizo su triunfo especialmente memorable para la isla."},
+  {keywords:["zuleyka rivera","zuleyka"],response:"Zuleyka Rivera ganó Miss Universo 2006. Fue la quinta corona de Miss Universo para Puerto Rico."},
+  {keywords:["palabras boricuas","jerga boricua","slang boricua","expresiones boricuas"],response:"Algunas palabras boricuas comunes son: wepa, brutal, chévere, pana, corillo, janguear, guagua, china, bregar, nene, nena, algarete y bendito."},
+  {keywords:["wepa"],response:"Wepa es una expresión boricua de alegría, emoción o celebración. Es como decir “¡eso!”, “¡bravo!” o “¡qué emoción!”."},
+  {keywords:["brutal"],response:"En Puerto Rico, brutal puede significar que algo está excelente, impresionante o bien bueno. Por ejemplo: “Esa playa está brutal”."},
+  {keywords:["pana"],response:"Pana significa amigo o persona cercana. Por ejemplo: “Él es mi pana” quiere decir “él es mi amigo”."},
+  {keywords:["corillo"],response:"Corillo significa grupo de amigos o grupo de personas con quienes uno comparte. Por ejemplo: “voy con mi corillo”."},
+  {keywords:["janguear","jangueo"],response:"Janguear significa salir a compartir, pasarla bien o reunirse con amistades. Jangueo es la salida o el ambiente."},
+  {keywords:["guagua"],response:"En Puerto Rico, guagua puede significar autobús, van, SUV o vehículo grande, dependiendo del contexto."},
+  {keywords:["china","naranja"],response:"En Puerto Rico, a la naranja se le dice muchas veces china. Por ejemplo: “quiero jugo de china” significa jugo de naranja."},
+  {keywords:["bendito","ay bendito"],response:"Ay bendito es una expresión boricua que puede expresar ternura, pena, sorpresa o compasión, dependiendo del tono. Es una de esas frases bien de aquí."},
+  {keywords:["algarete"],response:"Algarete significa desordenado, sin control o a lo loco. Por ejemplo: “eso está algarete” quiere decir que está fuera de control o desorganizado."},
+  {keywords:["bregar"],response:"Bregar significa resolver, manejar una situación o lidiar con algo. Es una palabra muy usada en Puerto Rico."},
+  {keywords:["guavate","ruta del lechon","ruta del lechón","lechoneras"],response:"Guavate, en Cayey, es famoso por la Ruta del Lechón. Allí hay lechoneras, música, comida criolla y ambiente familiar. Es uno de los chinchorreos más conocidos de Puerto Rico."},
+  {keywords:["kioskos","kioskos de luquillo","kioscos"],response:"Los kioskos de Luquillo son una zona muy famosa para comer frituras, mariscos, comida criolla y bebidas cerca de la playa. Es una parada clásica para turistas y locales."},
+  {keywords:["piñones","pinones","kioskos piñones","loiza comida"],response:"Piñones, cerca de Loíza, es famoso por sus kioskos, frituras, alcapurrias, bacalaítos, playa, manglares y cultura afroboricua."},
+  {keywords:["huracanes","huracan","huracán","maria","maría","huracan maria","huracán maría"],response:"Puerto Rico está en el Caribe y puede verse afectado por huracanes. El huracán María en 2017 fue uno de los eventos más fuertes y recordados por su impacto en la isla."},
+  {keywords:["clima","temperatura","calor","lluvia"],response:"Puerto Rico tiene clima tropical. Suele hacer calor durante gran parte del año, con temporadas de lluvia y riesgo de huracanes entre verano y otoño."},
+  {keywords:["cafe","café","cafe puertorriqueño","café puertorriqueño"],response:"El café puertorriqueño es parte importante de la cultura de la montaña. Pueblos como Yauco, Adjuntas, Jayuya, Lares y Maricao tienen tradición cafetalera."},
+  {keywords:["ron","ron de puerto rico","bacardi","bacardí","don q"],response:"Puerto Rico es conocido por su ron. Marcas como Don Q y Bacardí están asociadas a la isla. El ron forma parte de muchas bebidas tropicales y celebraciones."},
+  {keywords:["artesania","artesanía","santos de palo","vejigantes","mascaras","máscaras"],response:"La artesanía puertorriqueña incluye santos de palo, máscaras de vejigante, mundillo, tallas, instrumentos y piezas inspiradas en la cultura taína, africana y española."},
+  {keywords:["vejigante","vejigantes","mascara vejigante","máscara vejigante"],response:"El vejigante es una figura tradicional de Puerto Rico, muy asociada a fiestas y carnavales. Usa máscaras coloridas y trajes llamativos. Pueblos como Ponce y Loíza tienen tradiciones fuertes de vejigantes."},
+  {keywords:["santos de palo","santo de palo","tallas religiosas"],response:"Los santos de palo son tallas religiosas hechas en madera. Son una expresión tradicional de la artesanía puertorriqueña y reflejan la herencia católica y popular de la isla."},
+  {keywords:["mundillo","encaje","moca"],response:"El mundillo es un tipo de encaje hecho a mano con bolillos. Moca es uno de los pueblos más asociados con esta tradición artesanal."},
+  {keywords:["carros publicos","carros públicos","transportacion","transportación","guagua publica","guagua pública"],response:"En Puerto Rico hay transporte público, pero en muchas áreas la gente depende mucho del carro. En la zona metro hay tren urbano, guaguas y carros públicos, pero fuera del área metro suele ser más difícil moverse sin vehículo."},
+  {keywords:["seguridad","turista","turismo seguro","es seguro puerto rico"],response:"Como en cualquier destino, en Puerto Rico conviene usar sentido común: cuidar pertenencias, evitar áreas solas de noche, seguir avisos de playas y planificar rutas. Las zonas turísticas principales suelen recibir muchos visitantes."},
+  {keywords:["playas peligrosas","corrientes marinas","resaca","oleaje"],response:"Algunas playas de Puerto Rico pueden tener corrientes fuertes o resaca. Es importante mirar banderas, avisos, oleaje y no meterse al agua si se ve peligroso. No todas las playas son igual de tranquilas."},
+  {keywords:["snorkel","buceo","careteo"],response:"Puerto Rico tiene buenos lugares para snorkel y buceo, especialmente en Culebra, Vieques, Fajardo, La Parguera, Rincón y algunas playas del oeste y este."},
+  {keywords:["montaña","montanas","montañas","centro de la isla","cordillera central"],response:"El centro de Puerto Rico es montañoso y tiene pueblos con clima fresco, café, ríos, miradores y rutas panorámicas. Lugares como Adjuntas, Jayuya, Utuado, Orocovis y Cayey muestran otro lado de la isla."},
+  {keywords:["cuevas","cavernas","camuy","cueva del indio"],response:"Puerto Rico tiene cuevas y cavernas interesantes. Algunas conocidas son las Cavernas de Camuy y la Cueva del Indio en Arecibo, ambas con paisajes naturales impresionantes."},
+  {keywords:["rios","ríos","charcos","cascadas","gozalandia"],response:"Además de playas, Puerto Rico tiene ríos, charcos y cascadas. Lugares como Gozalandia, El Yunque, Charco Azul y áreas de Utuado o San Sebastián son populares para disfrutar agua dulce y naturaleza."},
+  {keywords:["arecibo","cueva del indio","observatorio","poza del obispo"],response:"Arecibo tiene costa, cuevas, historia y naturaleza. Lugares conocidos incluyen la Cueva del Indio, la Poza del Obispo, el Faro de Arecibo y el área del antiguo radiotelescopio."},
+  {keywords:["yauco","yaucromatic","arte urbano","cafe yauco","café yauco"],response:"Yauco es conocido por su café y por Yaucromatic, una zona de arte urbano con casas pintadas de colores. Es un buen ejemplo de cómo los pueblos mezclan cultura, historia y creatividad."},
+  {keywords:["jayuya","cemi","cemí","piedra escrita","taino jayuyua","taíno jayuya"],response:"Jayuya está en la montaña y tiene fuerte conexión con la cultura taína. Lugares como Piedra Escrita y el Museo El Cemí resaltan esa herencia indígena."},
+  {keywords:["utuado","caguana","tanama","tanamá","dos bocas"],response:"Utuado es un pueblo montañoso con ríos, cultura taína y aventura. Allí se encuentran lugares como el Centro Ceremonial Indígena de Caguana, el Lago Dos Bocas y el Río Tanamá."},
+  {keywords:["san german","san germán","porta coeli"],response:"San Germán es uno de los pueblos más históricos de Puerto Rico. Porta Coeli es uno de sus lugares más conocidos y representa la herencia colonial y religiosa de la isla."},
+  {keywords:["mayaguez","mayagüez","oeste","ciudad universitaria"],response:"Mayagüez es una ciudad importante del oeste de Puerto Rico, conocida por su ambiente universitario, plaza, historia y cercanía a playas y pueblos del oeste."},
+  {keywords:["bayamon","bayamón","area metro","área metro"],response:"Bayamón es una ciudad grande del área metropolitana. Tiene centros comerciales, parques, museos y mucha actividad urbana."},
+  {keywords:["carolina","isla verde","aeropuerto"],response:"Carolina es parte del área metro y es conocida por Isla Verde, hoteles, playas turísticas y su cercanía al aeropuerto principal."},
+  {keywords:["dorado","playa dorado","turismo dorado"],response:"Dorado es un pueblo del norte conocido por playas, resorts, restaurantes y un ambiente turístico más tranquilo y elegante."},
+  {keywords:["humacao","palmas del mar","reserva humacao"],response:"Humacao está en el este de Puerto Rico y combina playa, naturaleza y áreas turísticas como Palmas del Mar y la Reserva Natural de Humacao."},
+  {keywords:["naguabo","malecon naguabo","malecón naguabo","mariscos"],response:"Naguabo es famoso por su malecón y restaurantes de mariscos. Es un buen lugar para comer cerca del agua y disfrutar el ambiente del este."},
+  {keywords:["salinas","la paseadora","mariscos salinas"],response:"Salinas es un pueblo del sur conocido por su costa, cayos, restaurantes de mariscos y La Paseadora."},
+  {keywords:["orocovis","toro verde","centro de puerto rico"],response:"Orocovis es conocido como el corazón de Puerto Rico por su ubicación central. Allí está Toro Verde, un parque de aventura famoso por sus zip lines."},
+  {keywords:["pueblo de manati","pueblo de manatí","manati municipio","manatí municipio","manati pueblo","manatí pueblo","municipio de manati","municipio de manatí","mar chiquita","poza de las mujeres"],response:"Manatí tiene playas espectaculares como Mar Chiquita y la Poza de las Mujeres. Es un pueblo del norte con paisajes costeros muy fotogénicos."},
+  {keywords:["isabela","jobos","pozo de jacinto","guajataca"],response:"Isabela es un pueblo del noroeste famoso por playas como Jobos, el Pozo de Jacinto, el Túnel de Guajataca y paisajes costeros hermosos."},
+  {keywords:["aguadilla","crash boat","punta borinquen"],response:"Aguadilla está en el oeste y es famosa por Crash Boat, playas de surf, atardeceres, el área de Punta Borinquen y un ambiente costero muy bonito."},
+  {keywords:["quebradillas","guajataca","mirador quebradillas"],response:"Quebradillas tiene vistas costeras impresionantes, el área de Guajataca y paisajes del noroeste. Es bueno para fotos, carretera y naturaleza."},
+  {keywords:["borinqueño","borinqueña","borinquen","borinquén"],response:"Borinqueño o borinqueña es otra forma poética y cultural de decir puertorriqueño. Viene de Borinquen o Borikén, nombre indígena asociado con Puerto Rico. Se usa mucho en canciones, poemas, discursos y expresiones de orgullo patrio."},
+  {keywords:["nuyorican","newyorican","puertorriqueño de nueva york","boricua de nueva york"],response:"Nuyorican se usa para referirse a personas puertorriqueñas o de ascendencia boricua vinculadas a Nueva York. La comunidad boricua en Nueva York ha tenido un papel enorme en la música, la poesía, la política, el arte y la cultura latina en Estados Unidos."},
+  {keywords:["isleño","isleña","isleno","islena","de la isla"],response:"A veces se dice isleño o isleña para referirse a alguien de Puerto Rico, especialmente cuando se habla desde fuera de la isla. Pero la forma más común y querida es boricua."},
+  {keywords:["jibaro","jíbaro","jibara","jíbara","campesino boricua","musica jibara","música jíbara"],response:"Jíbaro o jíbara se refiere tradicionalmente a la persona del campo puertorriqueño. Representa la vida rural, la montaña, el café, el cuatro puertorriqueño, la música típica y la identidad campesina boricua."},
+  {keywords:["porque boricua","por qué boricua","de donde viene boricua","origen boricua"],response:"Se dice boricua porque viene de Borikén o Borinquen, nombre asociado a Puerto Rico antes de la llegada de los españoles. Con el tiempo, boricua se convirtió en una palabra de orgullo para decir: soy de Puerto Rico."},
+  {keywords:["licencia de conducir","licencia puerto rico","conducir en puerto rico","manejar en puerto rico"],response:"En Puerto Rico la licencia de conducir se tramita a través de CESCO/DTOP. Para manejar legalmente se necesita licencia vigente, y muchos trámites se hacen por cita o en línea. Si una persona viene de visita, puede manejar con una licencia válida de su país o jurisdicción, pero conviene verificar reglas de renta de autos y seguros."},
+  {keywords:["licencia de aprendizaje","aprendizaje","permiso de aprendizaje","sacar licencia","examen de aprendizaje"],response:"La licencia de aprendizaje en Puerto Rico es el primer paso para aprender a conducir legalmente. Normalmente requiere tener al menos 16 años, documentos de identidad, evidencia de dirección, certificación médica y aprobar un examen teórico. Luego se pasa al proceso para tomar el examen práctico."},
+  {keywords:["cesco","dtop","centro de servicios al conductor","servicios al conductor"],response:"CESCO significa Centro de Servicios al Conductor y es parte del sistema del DTOP en Puerto Rico. Allí se hacen trámites como licencia de conducir, identificación, renovación, duplicados, multas y otros servicios relacionados con vehículos y conductores."},
+  {keywords:["real id","realid","licencia real id","id puerto rico"],response:"En Puerto Rico se puede tramitar una licencia o identificación Real ID si la persona cumple con los requisitos. El Real ID sirve para propósitos oficiales federales, como abordar vuelos domésticos dentro de Estados Unidos, según las reglas federales aplicables."},
+  {keywords:["examen practico","examen práctico","examen de conducir","prueba de conducir"],response:"El examen práctico de conducir en Puerto Rico evalúa si la persona puede manejar de forma segura y cumplir con las reglas de tránsito. Normalmente se toma después de tener licencia de aprendizaje por el tiempo requerido y completar los documentos necesarios."},
+  {keywords:["manejar turista","turista manejar","rentar carro","alquilar carro","car rental"],response:"Si vienes de visita a Puerto Rico, rentar un carro puede ser muy útil porque muchas playas, pueblos de montaña y lugares turísticos quedan fuera del área metro. En San Juan puedes moverte con Uber o taxi, pero para explorar la isla completa el carro ayuda muchísimo."},
+  {keywords:["condado","isla verde","quedarse en san juan","hoteles san juan"],response:"Condado e Isla Verde son zonas populares para hospedarse en San Juan. Condado tiene restaurantes, playa, vida nocturna y buena ubicación. Isla Verde está cerca del aeropuerto y tiene hoteles frente a la playa."},
+  {keywords:["rincon hospedaje","rincón hospedaje","quedarse en rincon","quedarse en rincón"],response:"Rincón es una buena zona para hospedarse si quieres surf, atardeceres, ambiente relajado y playas del oeste. Es ideal para una visita más tranquila y playera."},
+  {keywords:["vieques hospedaje","culebra hospedaje","quedarse en vieques","quedarse en culebra"],response:"En Vieques y Culebra puedes quedarte en pequeños hoteles, guest houses o alquileres vacacionales. Son buenas opciones si quieres playas más naturales y una experiencia de islita, pero conviene reservar con tiempo."},
+  {keywords:["llamar a puerto rico","como llamar a puerto rico","cómo llamar a puerto rico","llamada internacional puerto rico"],response:"Para llamar a Puerto Rico desde otro país o desde servicios internacionales, normalmente marcas +1, luego el código de área 787 o 939, y luego el número de 7 dígitos. Ejemplo: +1 787 123 4567."},
+  {keywords:["codigo pais puerto rico","código país puerto rico","country code puerto rico"],response:"Puerto Rico usa el código +1 porque pertenece al North American Numbering Plan, igual que Estados Unidos, Canadá y otros territorios. Sus códigos de área principales son 787 y 939."},
+  {keywords:["horas vuelo bogota san juan","horas vuelo bogotá san juan","tiempo vuelo colombia puerto rico","vuelo bogota puerto rico"],response:"Un vuelo directo entre Bogotá y San Juan suele rondar varias horas, pero el tiempo exacto depende de la aerolínea, clima, ruta y aeropuerto. Si hay conexión, el viaje puede ser mucho más largo."},
+  {keywords:["vuelo san juan bogota","vuelo san juan bogotá","sju bog","bogota puerto rico","bogotá puerto rico"],response:"La ruta San Juan (SJU) a Bogotá (BOG) puede aparecer con Avianca como opción directa según disponibilidad y temporada. Para confirmar horarios y precios, lo mejor es revisar: https://www.avianca.com/ o buscadores como Google Flights."},
+  {keywords:["vuelo san juan medellin","vuelo san juan medellín","sju mde","medellin puerto rico","medellín puerto rico"],response:"Para San Juan (SJU) a Medellín (MDE), Avianca suele mostrar opciones de vuelos. También puedes revisar conexiones con Copa vía Panamá u otras aerolíneas según temporada. Verifica en https://www.avianca.com/ y https://www.copaair.com/ ."},
+  {keywords:["vuelo san juan cartagena","sju cartagena","sju ctg","cartagena puerto rico"],response:"Para San Juan (SJU) a Cartagena (CTG), puede haber opciones con conexión y en algunas temporadas rutas específicas. Revisa JetBlue, Avianca, Copa o American Airlines. Links útiles: https://www.jetblue.com/ , https://www.avianca.com/ , https://www.copaair.com/ , https://www.aa.com/ ."},
+  {keywords:["vuelo san juan cali","sju cali","cali puerto rico"],response:"Para viajar de San Juan a Cali, normalmente se hace con conexión, por ejemplo vía Bogotá, Panamá, Miami u otra ciudad según la aerolínea. Revisa opciones en Avianca, Copa, American Airlines o Google Flights."},
+  {keywords:["vuelo san juan barranquilla","sju barranquilla","barranquilla puerto rico"],response:"Para viajar de San Juan a Barranquilla, usualmente se viaja con conexión, dependiendo de la temporada y aerolínea. Puedes revisar Avianca, Copa, American Airlines, JetBlue o buscadores de vuelos para comparar."},
+  {keywords:["reggaeton nacio","reggaetón nació","nacio el reggaeton","nació el reggaetón","origen reggaeton","origen reggaetón"],response:"El reggaetón se desarrolló fuertemente en Puerto Rico desde la escena underground de finales de los 80 y especialmente los 90. También tuvo influencias de reggae en español, dancehall, hip hop y música caribeña. Puerto Rico fue clave en convertirlo en un movimiento mundial."},
+  {keywords:["reggaeton 1990","reggaetón 1990","reggaeton de los 90","reggaetón de los 90","underground puerto rico"],response:"En los años 90, el reggaetón en Puerto Rico era conocido muchas veces como underground. Se movía en mixtapes, marquesinas, caseríos, discotecas y producciones de DJs como DJ Playero, DJ Negro, DJ Nelson y The Noise."},
+  {keywords:["exponentes reggaeton","exponentes reggaetón","pioneros reggaeton","pioneros reggaetón"],response:"Entre los pioneros y exponentes tempranos del reggaetón están Vico C, DJ Playero, DJ Negro, DJ Nelson, The Noise, Daddy Yankee, Ivy Queen, Tego Calderón, Don Chezina, Baby Rasta & Gringo, Wisin & Yandel, Héctor & Tito y Don Omar."},
+  {keywords:["vico c","padre del rap","rap en español","rap boricua"],response:"Vico C es considerado una figura fundamental del rap en español y la música urbana boricua. Su trabajo abrió camino para muchos artistas urbanos de Puerto Rico y Latinoamérica."},
+  {keywords:["dj playero","playero","mixtapes reggaeton","mixtapes reggaetón"],response:"DJ Playero fue una figura clave en el desarrollo del underground y el reggaetón en Puerto Rico. Sus mixtapes ayudaron a impulsar artistas y sonidos que luego se volvieron parte de la historia del género."},
+  {keywords:["the noise","dj negro","club the noise"],response:"The Noise fue una plataforma importante para el desarrollo del reggaetón en Puerto Rico. Allí participaron artistas que luego serían figuras enormes del género urbano."},
+  {keywords:["daddy yankee gasolina","gasolina","barrio fino"],response:"Daddy Yankee ayudó a llevar el reggaetón al mundo con éxitos como Gasolina y el álbum Barrio Fino. Su impacto fue clave para que el género se volviera global."},
+  {keywords:["ivy queen","caballota","reina del reggaeton","reina del reggaetón"],response:"Ivy Queen es conocida como la Reina del Reggaetón o La Caballota. Fue una de las voces femeninas más importantes del género y abrió espacio para mujeres en una escena dominada por hombres."},
+  {keywords:["colon","colón","cristobal colon","cristóbal colón","llegada de colon","llegada de colón","españoles llegaron"],response:"Cristóbal Colón llegó a Puerto Rico en 1493 durante su segundo viaje al Caribe. Antes de la llegada española, la isla estaba habitada principalmente por taínos, quienes llamaban a la isla Borikén o Borinquen."},
+  {keywords:["tainos antes","taínos antes","antes de los españoles","quienes vivian en puerto rico","quiénes vivían en puerto rico"],response:"Antes de la llegada de los españoles, Puerto Rico estaba habitado principalmente por taínos. Tenían comunidades, caciques, agricultura, pesca, creencias espirituales y una cultura propia. Su legado sigue vivo en palabras, comidas, nombres de lugares y símbolos boricuas."},
+  {keywords:["que hicieron con los tainos","qué hicieron con los taínos","españoles y tainos","españoles y taínos","colonizacion tainos","colonización taínos"],response:"Con la colonización española, los taínos fueron sometidos a trabajos forzados, explotación, pérdida de tierras, enfermedades traídas de Europa y violencia. Su población disminuyó drásticamente, pero su herencia cultural y genética no desapareció del todo."},
+  {keywords:["africanos en puerto rico","esclavitud en puerto rico","esclavos africanos","africanos esclavizados","que hicieron con los africanos"],response:"Durante la colonización, España trajo africanos esclavizados a Puerto Rico, especialmente para trabajar en agricultura, haciendas y plantaciones. Su cultura influyó profundamente en la música, comida, lenguaje, religión, baile y tradiciones como la bomba."},
+  {keywords:["mezcla taina africana española","mezcla taína africana española","origen cultural puerto rico","raices de puerto rico","raíces de puerto rico"],response:"La identidad puertorriqueña se formó de una mezcla taína, africana y española, con influencias caribeñas y estadounidenses. Esa mezcla se ve en la comida, música, palabras, apellidos, tradiciones, religión y forma de vivir."},
+  {keywords:["caciques","cacique","agüeybana","agueybana","agüeybaná","tainos caciques","taínos caciques"],response:"Los taínos tenían líderes llamados caciques. En la historia de Puerto Rico se recuerda a Agüeybaná como uno de los caciques importantes de la isla en tiempos de la llegada española."},
+  {keywords:["boriken nombre taino","borikén nombre taíno","borinquen nombre","nombre indigena puerto rico","nombre indígena puerto rico"],response:"Borikén o Borinquen es el nombre indígena asociado con Puerto Rico antes de la colonización española. De ahí viene la palabra boricua, una de las formas más queridas de llamar a los puertorriqueños."},
+  {keywords:["porque se llama puerto rico","por qué se llama puerto rico","nombre puerto rico","origen nombre puerto rico","puerto rico oro","rico en oro"],response:"El nombre Puerto Rico se relaciona con la idea de un puerto valioso o rico, asociado a la importancia estratégica y económica de la bahía de San Juan y a la riqueza que los españoles buscaban, incluyendo oro. Con el tiempo, el nombre Puerto Rico pasó a identificar toda la isla."},
+  {keywords:["san juan bautista","nombre original puerto rico","isla san juan bautista","puerto rico se llamaba san juan"],response:"Al principio, los españoles llamaron a la isla San Juan Bautista, mientras que el puerto principal era conocido como Puerto Rico por su valor. Con el tiempo, los nombres se intercambiaron: San Juan quedó como la ciudad capital y Puerto Rico como el nombre de la isla."},
+  {keywords:["oro en puerto rico","minas de oro","oro tainos","oro españoles puerto rico"],response:"Los españoles buscaron oro en Puerto Rico durante la colonización temprana. Aunque la isla tuvo oro, no fue una fuente inmensa comparada con otros territorios de América. Aun así, la búsqueda de riqueza fue parte importante del interés colonial."},
+  {keywords:["por que san juan","por qué san juan","nombre san juan","san juan capital"],response:"San Juan viene del nombre San Juan Bautista, que originalmente los españoles usaron para la isla. Con el tiempo, San Juan quedó como el nombre de la ciudad capital y Puerto Rico como el nombre de toda la isla."},
+  {keywords:["hoteles recomendados","Hoteles","Hotel en puerto rico","mejores zonas para quedarse","donde dormir puerto rico","dónde dormir puerto rico","hospedaje","alojamiento"],response:"Para una primera visita a Puerto Rico, buenas zonas para quedarse son Condado, Isla Verde y Viejo San Juan si quieres estar cerca de playa, restaurantes, historia y vida urbana. Algunos hoteles conocidos son La Concha Resort, Condado Vanderbilt Hotel, San Juan Marriott Resort & Stellaris Casino, Caribe Hilton, Fairmont El San Juan Hotel, The Royal Sonesta San Juan, Courtyard Isla Verde Beach Resort, Hyatt House San Juan y Sheraton Puerto Rico Resort & Casino. Si quieres algo más tranquilo fuera del área metro, puedes mirar opciones en Rincón, Dorado, Fajardo, Cabo Rojo, Vieques o Culebra. También puedes usar Airbnb si prefieres una casa o apartamento para vacacionar. Para ver hoteles disponibles en Puerto Rico, entra aquí: https://www.discoverpuertorico.com/places-to-stay/hotels"},
+  {keywords:["airbnb seguro","airbnb puerto rico consejos","consejos airbnb"],response:"Si vas a usar Airbnb en Puerto Rico, revisa reseñas, estacionamiento, aire acondicionado, distancia real a playas, seguridad del área y reglas de check-in. También confirma si necesitas carro, porque muchas zonas turísticas fuera de San Juan dependen mucho del vehículo."},
+  {keywords:["resort puerto rico","resorts puerto rico","todo incluido puerto rico","all inclusive puerto rico"],response:"Puerto Rico tiene resorts y hoteles frente al mar, pero no es tan común el modelo todo incluido como en otros destinos del Caribe. Muchos visitantes combinan hotel o Airbnb con restaurantes, chinchorros y excursiones por la isla."},
+  {keywords:["paradores","parador","paradores de puerto rico"],response:"Los paradores son hospederías locales en Puerto Rico, muchas veces ubicadas fuera del área metro. Pueden ser una buena alternativa para conocer pueblos, playas, montaña y comida local con un ambiente más boricua."},
+{keywords:["chinchorro","chinchorrear","chinchorreo","ruta de chinchorreo","chinchorros puerto rico","chinchorros","guavate","lechoneras","kioskos","piñones","pinones","luquillo"],response:"Chinchorrear en Puerto Rico es salir a visitar negocios locales para comer, picar, beber algo, escuchar música y pasarla bien. Puede ser por la montaña, la costa o rutas famosas como Guavate en Cayey, Piñones en Loíza, los kioskos de Luquillo, La Parguera en Lajas, Naguabo, Salinas o Cabo Rojo. Es una experiencia bien boricua porque mezcla carretera, comida criolla, frituras, música, familia y jangueo. Para buscar lugares y rutas de chinchorreo puedes mirar en Google Maps: https://www.google.com/maps/search/chinchorros+Puerto+Rico"},
+ {keywords:["choliseo","choli","coliseo de puerto rico","coliseo josé miguel agrelot","coliseo jose miguel agrelot","jose miguel agrelot","josé miguel agrelot","arena de conciertos","conciertos puerto rico"],response:"El Choliseo es el nombre popular del Coliseo de Puerto Rico José Miguel Agrelot, ubicado en San Juan. Es uno de los escenarios principales de la isla para conciertos, eventos deportivos, espectáculos familiares y presentaciones internacionales. Se le dice “Choliseo” en honor a José Miguel Agrelot, conocido como “Don Cholito”, una figura muy querida de la radio y televisión puertorriqueña. Para ver eventos puedes visitar: https://www.coliseodepuertorico.com"}, 
+  {keywords:["bad bunny","benito","benito antonio","bad bunny puerto rico","conejo malo","san benito","artista bad bunny"],response:"Bad Bunny, cuyo nombre real es Benito Antonio Martínez Ocasio, es un artista puertorriqueño de Vega Baja. Es uno de los exponentes más grandes de la música urbana a nivel mundial y ha llevado la cultura boricua, el español caribeño y referencias de Puerto Rico a escenarios internacionales. Su música mezcla reggaetón, trap latino, pop, dembow, salsa, sonidos caribeños y letras con identidad boricua."},
+{keywords:["ruta","ruta del","ruta del lechon","ruta del lechón","guavate","lechoneras","lechonera","lechón en guavate","lechon en guavate","cayey guavate","comer lechon","comer lechón"],response:"La Ruta del Lechón en Guavate, Cayey, es una de las experiencias gastronómicas más famosas de Puerto Rico. Es una zona de montaña llena de lechoneras donde puedes comer lechón asado, arroz con gandules, morcilla, pasteles, yuca, guineítos, cuerito crujiente y comida criolla. Además de comer, mucha gente va por el ambiente: música, familia, carretera, chinchorreo y sabor boricua. Es un lugar perfecto para que alguien que visita la isla entienda lo importante que es la comida y el compartir en la cultura puertorriqueña."},
+{keywords:["hola","saludos","buenos dias","buenos días","buenas tardes","buenas noches","hey","hello","hi"],response:"¡Hola! ¿Cómo te ayudo? Dame una palabra o frase relacionada con Puerto Rico y te daré una respuesta."},
+{keywords:["puerto rico","pr","isla de puerto rico","la isla","isla del encanto","borinquen","borikén","boriken","boricua","puertorro"],response:"Puerto Rico es una isla caribeña conocida como la Isla del Encanto. Tiene playas, montañas, comida criolla, música, historia y una identidad cultural bien fuerte. Su capital es San Juan, tiene 78 municipios, usa el dólar estadounidense y su gente se identifica con mucho orgullo como boricua."},
+{keywords:["puertorriqueño","puertorriqueña","puertorriqueno","puertorriquena","puertorriqueños","puertorriqueñas","persona de puerto rico","gente de puerto rico","nacido en puerto rico","nacida en puerto rico","gentilicio puerto rico"],response:"Puertorriqueño o puertorriqueña es el gentilicio oficial para una persona de Puerto Rico. Se usa para hablar de quienes nacen en la isla o tienen raíces puertorriqueñas. También refleja una identidad cultural fuerte marcada por la historia, la música, la comida, el español caribeño, las tradiciones familiares y el orgullo por la isla."},
+{keywords:["raza","raza puertorriqueña","raza puertorriquena","raza de puerto rico","mezcla puertorriqueña","mezcla puertorriquena","taino español africano","taíno español africano","mezcla taina española africana","mezcla taína española africana","origen puertorriqueño","origen puertorriqueno"],response:"Cuando se habla de la “raza puertorriqueña”, muchas veces se está hablando de la mezcla histórica y cultural del pueblo puertorriqueño. Puerto Rico tiene raíces taínas, españolas y africanas. Los taínos habitaban la isla antes de la llegada de los españoles; luego llegó la colonización española, y también fueron traídas personas africanas esclavizadas. De esa mezcla nacieron muchas partes de la identidad boricua: la comida, la música, el lenguaje, las tradiciones, los apellidos, los rasgos físicos y la forma de vivir. Más que una sola raza, Puerto Rico es un pueblo mestizo y culturalmente diverso."},
+{keywords:["descubrimiento de puerto rico","descubrimiento pr","descubrimiento","cuando descubrieron puerto rico","cuándo descubrieron puerto rico","colon llega a puerto rico","colón llega a puerto rico","llegada de colon","llegada de colón","1493","segundo viaje de colon","segundo viaje de colón"],response:"El llamado “descubrimiento de Puerto Rico” ocurrió el 19 de noviembre de 1493, cuando Cristóbal Colón llegó a la isla durante su segundo viaje al Caribe. Pero es importante entender que la isla no estaba vacía: ya estaba habitada principalmente por taínos, quienes la llamaban Borikén o Borinquen. Por eso, hoy muchas personas prefieren hablar de la llegada de los españoles a Puerto Rico, porque para los taínos la isla ya existía, tenía cultura, comunidades, caciques, agricultura y vida propia."},
+{keywords:["festivales","festivales de puerto rico","festivales pr","fiestas de puerto rico","eventos culturales","festivales durante el año","calendario de festivales","celebraciones en puerto rico","fiestas patronales","fiestas de pueblo"],response:"Puerto Rico tiene muchísimos festivales durante el año. Algunos de los más conocidos son:\n\n• Fiestas de la Calle San Sebastián — Viejo San Juan.\n• Fiesta de Reyes / Día de Reyes — Juana Díaz y otros pueblos.\n• Festival de la Novilla — San Sebastián.\n• Festival de las Máscaras — Hatillo.\n• Carnaval de Ponce — Ponce.\n• Festival Casals — San Juan.\n• Festival de Teatro Puertorriqueño — San Juan.\n• La Campechada — festival cultural y artístico itinerante.\n• Festival de las Flores — Aibonito.\n• Festival del Café — Maricao, Yauco, Adjuntas y otros pueblos cafetaleros.\n• Festival de la China Dulce — Las Marías.\n• Festival del Frío — Adjuntas.\n• Festival del Apio — Barranquitas.\n• Festival del Mundillo — Moca.\n• Festival Nacional Indígena — Jayuya.\n• Festival del Cemí — Jayuya.\n• Festival de la Hamaca — San Sebastián.\n• Festival del Tinglar — Luquillo.\n• Festival de la Piña Paradisíaca — Lajas.\n• Festival del Tomate — Jayuya.\n• Festival del Plátano — Corozal.\n• Festival del Guineo — Lares.\n• Festival del Ñame — Naranjito.\n• Festival del Panapén — Humacao.\n• Festival del Coco — Luquillo o pueblos costeros, según edición.\n• Festival de la Pana — pueblos agrícolas, según edición.\n• Festival del Marisco — Salinas, Naguabo o pueblos costeros, según edición.\n• Festival del Chapín — Naguabo.\n• Festival del Juey — Maunabo.\n• Festival del Pescao — pueblos costeros, según edición.\n• Festival de la Yuca — pueblos agrícolas, según edición.\n• Festival de la Longaniza — Orocovis.\n• Festival del Lechón — Guavate/Cayey y otras zonas.\n• Festival del Mojo Isleño — Salinas.\n• Festival Gastronómico Porta del Sol — zona oeste.\n• Saborea Puerto Rico — evento gastronómico.\n• Taste of Rum — San Juan.\n• Mojito Fest — San Juan o área metro, según edición.\n• Coffee & Chocolate Expo — San Juan.\n• Puerto Rico Comic Con — San Juan.\n• Heineken JazzFest — San Juan.\n• Festival de Bomba y Plena — varios pueblos.\n• Festival de Santiago Apóstol — Loíza.\n• Fiestas Tradicionales de Loíza — Loíza.\n• Fiestas de Cruz — varios pueblos.\n• Noche de San Juan — playas y pueblos alrededor de la isla.\n• Encendidos Navideños — plazas de muchos municipios.\n• Parrandas y Trullas Navideñas — celebraciones navideñas por toda la isla.\n• Fiestas patronales — cada municipio celebra las suyas durante el año.\n\nLas fechas pueden cambiar cada año, así que antes de ir conviene verificar el calendario oficial de eventos: https://www.discoverpuertorico.com/things-to-do/events"},
+{keywords:["Festivos","dias feriados","días feriados","feriados puerto rico","dias feriados pr","días feriados pr","feriados oficiales","feriados oficiales puerto rico","holidays puerto rico","public holidays puerto rico"],response:"Días feriados oficiales de Puerto Rico:\n\n• 1 de enero — Año Nuevo.\n• 6 de enero — Día de Reyes / Epifanía.\n• 19 de enero — Natalicio de Martin Luther King Jr.\n• 16 de febrero — Día de los Presidentes.\n• 16 de febrero — Día de los Próceres Puertorriqueños / National Heroes' Day.\n• 2 de marzo — Día de la Ciudadanía Americana.\n• 22 de marzo — Día de la Abolición de la Esclavitud.\n• 3 de abril — Viernes Santo.\n• 5 de abril — Domingo de Resurrección.\n• 25 de mayo — Día de la Recordación / Memorial Day.\n• 4 de julio — Día de la Independencia de Estados Unidos.\n• 7 de septiembre — Día del Trabajo.\n• 12 de octubre — Día de la Raza / Columbus Day.\n• 11 de noviembre — Día de los Veteranos.\n• 19 de noviembre — Día del Descubrimiento de Puerto Rico.\n• 26 de noviembre — Día de Acción de Gracias.\n• 24 de diciembre — Nochebuena, usualmente medio día o cierre parcial.\n• 25 de diciembre — Navidad.\n\nAlgunos cierres pueden variar por agencia, patrono o sector, así que conviene verificar calendarios oficiales si es para trabajo, escuela o trámites."},
+{keywords:["Qué artistas famosos son de Puerto Rico","artistas boricuas","cantantes boricuas","artistas de puerto rico","cantantes de puerto rico","musicos boricuas","músicos boricuas","artistas puertorriqueños","artistas puertorriquenos","musica boricua artistas","música boricua artistas"],response:"Puerto Rico ha dado muchísimos artistas conocidos. Algunos de los más destacados de los ultimos años por género son:\n\nBalada / Pop:\n• Ricky Martin - Pop latino\n• Chayanne - Pop / balada romántica\n• Luis Fonsi - Pop / balada\n• Ednita Nazario - Balada / pop\n• Kany García - Cantautora / pop\n• Tommy Torres - Cantautor / pop\n• José Feliciano - Balada / guitarra / música latina\n• Glenn Monroig - Balada / trova\n• Lourdes Robles - Balada / pop\n• Yolandita Monge - Balada / pop\n• Noelia - Pop latino\n• Obie Bermúdez - Pop / balada\n\nMúsica folclórica / Trova / Jíbara:\n• Andrés Jiménez “El Jíbaro” - Música folclórica / trova\n• Tony Croatto ✝ - Música folclórica / jíbara\n• Roy Brown - Nueva trova / canción social\n• Danny Rivera - Trova / balada / música patriótica\n• Lucecita Benítez - Balada / música popular\n• Chucho Avellanet - Balada / música popular\n\nMerengue / Tropical:\n• Elvis Crespo - Merengue\n• Grupo Manía - Merengue / tropical\n• Olga Tañón - Merengue / pop tropical\n• Manny Manuel - Merengue / tropical\n• Limi-T 21 - Merengue / tropical\n• Gisselle - Merengue / pop tropical\n• Melina León - Merengue / tropical\n\nSalsa:\n• El Gran Combo de Puerto Rico - Salsa\n• Héctor Lavoe ✝ - Salsa\n• Ismael Rivera ✝ - Salsa / música afrocaribeña\n• Cheo Feliciano ✝ - Salsa / bolero\n• Frankie Ruiz ✝ - Salsa romántica\n• Gilberto Santa Rosa - Salsa\n• Víctor Manuelle - Salsa\n• Jerry Rivera - Salsa romántica\n• Tito Rojas ✝ - Salsa\n• Tony Vega - Salsa\n• La India - Salsa\n• Marc Anthony - Salsa / pop latino\n• Andy Montañez - Salsa\n• Cano Estremera ✝ - Salsa\n• Maelo Ruiz - Salsa romántica\n• Domingo Quiñones - Salsa\n\nReggaetón / Urbano:\n• Daddy Yankee - Reggaetón\n• Don Omar - Reggaetón\n• Tego Calderón - Reggaetón / rap\n• Ivy Queen - Reggaetón\n• Wisin & Yandel - Reggaetón\n• Héctor & Tito - Reggaetón\n• Tito El Bambino - Reggaetón / pop urbano\n• Plan B - Reggaetón\n• Zion & Lennox - Reggaetón\n• Alexis & Fido - Reggaetón\n• Jowell & Randy - Reggaetón\n• Ñengo Flow - Reggaetón / trap\n• De La Ghetto - Reggaetón / R&B urbano\n• Arcángel - Reggaetón / trap latino\n• Cosculluela - Rap / trap / reggaetón\n• Farruko - Reggaetón / urbano\n• Bad Bunny - Reggaetón / trap / urbano alternativo\n• Rauw Alejandro - Reggaetón / pop urbano\n• Myke Towers - Trap / reggaetón\n• Anuel AA - Trap / reggaetón\n• Ozuna - Reggaetón / pop urbano\n• Lunay - Reggaetón\n• Young Miko - Trap / urbano\n• Mora - Reggaetón / pop urbano\n• Chencho Corleone - Reggaetón\n• Maldy - Reggaetón\n• Yomo - Reggaetón / rap\n• Tempo - Rap / urbano\n• Residente - Rap / urbano alternativo\n• Calle 13 - Urbano alternativo / rap latino\n• Entre muchos más.\n\nRock / Alternativo / Fusión:\n• Fiel a la Vega - Rock en español\n• Cultura Profética - Reggae / fusión\n• Mima - Alternativo / indie\n• Draco Rosa - Rock / pop alternativo\n• Sie7e - Pop / reggae / fusión\n• Buscabulla - Indie / synth pop\n\nPuerto Rico tiene una escena musical enorme: desde música jíbara, salsa, merengue y balada, hasta reggaetón, trap, pop, rock alternativo y fusiones caribeñas."},
+{keywords:["el morro","morro","castillo el morro","castillo san felipe del morro","san felipe del morro","fortaleza el morro","fuerte el morro","viejo san juan el morro"],response:"El Morro, oficialmente Castillo San Felipe del Morro, es una fortaleza histórica ubicada en el Viejo San Juan. Fue construida por los españoles para proteger la entrada de la Bahía de San Juan de ataques marítimos. Es uno de los lugares más icónicos de Puerto Rico, con murallas, garitas, vistas al mar y un gran campo verde donde muchas personas vuelan chiringas. Es una parada obligatoria para conocer la historia colonial de la isla y tomar fotos brutales."},
+{keywords:["garita","garita del diablo","la garita","garitas","garita san juan","garita del morro","garita de puerto rico"],response:"Las garitas son pequeñas torres de vigilancia que se encuentran en las murallas y fortalezas del Viejo San Juan, especialmente en El Morro y San Cristóbal. Servían para que los soldados vigilaran la entrada por mar y protegieran la ciudad. La más famosa es la Garita del Diablo, ubicada en el Castillo San Cristóbal, rodeada de leyendas e historias populares. Hoy las garitas son uno de los símbolos más reconocidos de Puerto Rico y aparecen mucho en fotos, arte, recuerdos y diseños boricuas."},
+{keywords:["himno","himno de puerto rico","himno puerto rico","la borinqueña","la borinquena","himno boricua","himno nacional puerto rico","cancion patria puerto rico","canción patria puerto rico"],response:"El himno de Puerto Rico se llama “La Borinqueña”. Es uno de los símbolos más importantes de la identidad puertorriqueña. Su letra oficial dice:\n\nLa tierra de Borinquen\ndonde he nacido yo\nes un jardín florido\nde mágico primor.\n\nUn cielo siempre nítido\nle sirve de dosel\ny dan arrullos plácidos\nlas olas a sus pies.\n\nCuando a sus playas llegó Colón\nexclamó lleno de admiración:\n“Oh, oh, oh, esta es la linda tierra\nque busco yo”.\n\nEs Borinquen la hija,\nla hija del mar y el sol,\ndel mar y el sol,\ndel mar y el sol."},
+{keywords:["bandera","bandera de puerto rico","bandera pr","colores bandera","estrella bandera","triangulo azul","triángulo azul","que significa la bandera","qué significa la bandera"],response:"La bandera de Puerto Rico es uno de los símbolos más importantes de la identidad boricua.<br><br><img class='bot-image' src='https://upload.wikimedia.org/wikipedia/commons/2/28/Flag_of_Puerto_Rico.svg' alt='Bandera de Puerto Rico'><br>• Las franjas rojas representan la sangre derramada por los patriotas.<br>• Las franjas blancas representan la libertad y los derechos del pueblo.<br>• El triángulo azul representa el cielo y las aguas que rodean la isla.<br>• La estrella blanca representa a Puerto Rico como una sola patria.<br><br>La bandera se usa con mucho orgullo en casas, carros, ropa, murales, conciertos, deportes y celebraciones boricuas."},
+{keywords:["cotorra","cotorra puertorriqueña","cotorra puertorriquena","cotorra de puerto rico","loro puertorriqueño","loro puertorriqueno","iguaca"],response:"La cotorra puertorriqueña, también conocida como iguaca, es una de las aves más importantes de Puerto Rico. Es endémica de la isla y ha estado en peligro de extinción, por eso existen programas de conservación para protegerla.<br><br><img class='bot-image' src='https://upload.wikimedia.org/wikipedia/commons/9/98/Puerto_Rican_parrot.jpg' alt='Cotorra puertorriqueña'><br>Es un símbolo de la fauna boricua y de los esfuerzos por conservar la naturaleza de Puerto Rico."},
+{keywords:["sapo concho","sapo concho puertorriqueño","sapo concho puertorriqueno","sapo de puerto rico"],response:"El sapo concho puertorriqueño es un anfibio endémico de Puerto Rico. Es uno de los sapos más conocidos de la isla y ha estado en peligro, por lo que se han hecho esfuerzos para reproducirlo y proteger su hábitat.<br><br><img class='bot-image' src='https://upra.edu/wp-content/uploads/2025/07/Concho-macho-JP-Zegarra.jpg' alt='Sapo concho puertorriqueño'><br>Es importante porque representa la biodiversidad única de Puerto Rico."},
+{keywords:["boa","boa puertorriqueña","boa puertorriquena","culebron","culebrón","culebra de puerto rico","boa de puerto rico"],response:"La boa puertorriqueña es una serpiente nativa de Puerto Rico. No es venenosa y ayuda al ecosistema controlando poblaciones de animales pequeños. Aunque mucha gente le tiene miedo, es parte importante de la fauna boricua.<br><br><img class='bot-image' src='https://cloudfront-us-east-1.images.arcpublishing.com/gfrmedia/Q3GNMD76OVERZHFJF5CXY7VO6E.jpeg' alt='Boa puertorriqueña'><br>Es una especie protegida y debe respetarse en su ambiente natural."},
+{keywords:["reinita","reinita mariposera","reinita de puerto rico","reinita puertorriqueña","reinita puertorriquena"],response:"La reinita mariposera es un ave endémica de Puerto Rico. Es pequeña, activa y suele encontrarse en bosques y áreas naturales de la isla.<br><br><img class='bot-image' src='https://cdn.download.ams.birds.cornell.edu/api/v2/asset/242624121/900' alt='Reinita mariposera'><br>Es una de las aves que muestran la riqueza natural de Puerto Rico."},
+{keywords:["tinglar","tortuga tinglar","tortuga marina","tortugas marinas puerto rico"],response:"El tinglar es una tortuga marina enorme que llega a playas de Puerto Rico para anidar. Es una especie protegida y muy importante para la conservación marina.<br><br><img class='bot-image' src='https://i.pinimg.com/736x/ac/04/e1/ac04e137b388466cefda8b8588e08db6.jpg' alt='Tortuga tinglar'><br>Cuando hay nidos de tinglar en las playas, se deben respetar las áreas protegidas y no molestar los huevos ni las crías."},
+{keywords:["manati antillano","manatí antillano","vaca marina","animal manati","animal manatí","mamifero marino","mamífero marino"],response:"El manatí antillano vive en aguas cálidas del Caribe, incluyendo Puerto Rico. Es un mamífero marino tranquilo que se alimenta de vegetación acuática y está protegido porque ha estado amenazado.<br><br><img class='bot-image' src='https://manatipr.org/wp-content/uploads/2024/05/Manati-15-1024x683.jpg' alt='Manatí antillano'><br>En Puerto Rico es importante protegerlo evitando golpes con embarcaciones y cuidando su hábitat."},
+
+];
+
+const trainingResponses = [
+  "Wepa, esa pregunta está buena. Ahora mismo estoy en entrenamiento y todavía no tengo esa información en mi base boricua.",
+  "Todavía estoy aprendiendo más sobre Puerto Rico, así que prefiero no inventarte una respuesta.",
+  "Esa no la tengo clara todavía. Mi conocimiento boricua sigue creciendo poco a poco.",
+  "Ahora mismo no tengo esa respuesta guardada en mi entrenamiento local.",
+  "Buena pregunta. En este momento no encontré esa información en mi base de conocimiento."
+];
+
+function getTrainingResponse(question){
+  const randomMessage = trainingResponses[Math.floor(Math.random() * trainingResponses.length)];
+  return `${randomMessage}
+
+Puedes copiar esta pregunta y hacerla en ChatGPT:
+
+"${question}"
+
+Tip: toca el botón de abajo que dice “Abrir ChatGPT con mi pregunta”.`;
+}
+
+function norm(t){
+  return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+}
+
+
+function checkAmbiguousQuestion(question){
+  const q = norm(question);
+
+  if(q === "manati" || q === "manatí" || q.includes(" manati ") || q.includes(" manatí ")){
+    pendingClarification = {
+      originalQuestion: question,
+      options: {
+        "municipio": "municipio",
+        "pueblo": "municipio",
+        "animal": "animal",
+        "manati animal": "animal",
+        "manatí animal": "animal",
+        "manati antillano": "animal",
+        "manatí antillano": "animal"
+      }
+    };
+
+    return "Cuando dices “Manatí”, ¿te refieres al municipio de Puerto Rico o al animal marino? Responde escribiendo: municipio o animal.";
+  }
+
+  return null;
+}
+
+
+
+function handleClarificationAnswer(answer){
+  if(!pendingClarification) return null;
+
+  const cleanAnswer = norm(answer);
+  const selectedOption = pendingClarification.options[cleanAnswer];
+
+  if(!selectedOption){
+    return "No entendí tu respuesta. Escríbeme solamente: municipio o animal.";
+  }
+
+  pendingClarification = null;
+
+  if(selectedOption === "municipio"){
+    return "Manatí tiene playas espectaculares como Mar Chiquita y la Poza de las Mujeres. Es un pueblo del norte de Puerto Rico con paisajes costeros muy fotogénicos.";
+  }
+
+  if(selectedOption === "animal"){
+    return "El manatí antillano vive en aguas cálidas del Caribe, incluyendo Puerto Rico. Es un mamífero marino tranquilo que se alimenta de vegetación acuática y está protegido porque ha estado amenazado.<br><br><img class='bot-image' src='https://cdn0.ecologiaverde.com/es/posts/4/8/6/manati_5684_600.jpg' alt='Manatí antillano'><br>En Puerto Rico es importante protegerlo evitando golpes con embarcaciones y cuidando su hábitat.";
+  }
+
+  return null;
+}
+
+
+function getBotResponse(q){
+  const clarificationAnswer = handleClarificationAnswer(q);
+  if(clarificationAnswer) return clarificationAnswer;
+
+  const ambiguousQuestion = checkAmbiguousQuestion(q);
+  if(ambiguousQuestion) return ambiguousQuestion;
+
+  const nq = norm(q);
+
+  const town = allTownNames.find(n => nq.includes(norm(n)));
+  if(town){
+    const t = townData[town];
+    return `${town} queda en la región ${t.r}. Puedes visitar: ${t.v.join(", ")}. ${t.n}`;
+  }
+
+  let bestTopic = null;
+  let bestKeywordLength = 0;
+
+  for(const topic of botTopics){
+    for(const keyword of topic.keywords){
+      const cleanKeyword = norm(keyword);
+
+      if(nq.includes(cleanKeyword) && cleanKeyword.length > bestKeywordLength){
+        bestTopic = topic;
+        bestKeywordLength = cleanKeyword.length;
+      }
+    }
+  }
+
+  if(bestTopic) return bestTopic.response;
+
+  return getTrainingResponse(q);
+}
+
+function addMessage(text,type){
+  const m = document.createElement("div");
+  m.className = `msg ${type}`;
+
+  if(type === "bot"){
+    m.innerHTML = text;
+  }else{
+    m.textContent = text;
+  }
+
+  chatMessages.appendChild(m);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function sendMessage(){
+  const text = chatInput.value.trim();
+  if(!text) return;
+
+  lastUserQuestion = text;
+
+  addMessage(text,"user");
+  chatInput.value = "";
+
+  setTimeout(()=>addMessage(getBotResponse(text),"bot"),250);
+}
+
+function askSuggestion(text){
+  chatInput.value = text;
+  sendMessage();
+}
+
+function openChatGPTWithQuestion(){
+  const question = chatInput.value.trim() || lastUserQuestion;
+
+  if(!question){
+    alert("Escribe una pregunta primero para copiarla y abrir ChatGPT.");
+    return;
+  }
+
+  const prompt = `Quiero saber esto sobre Puerto Rico: ${question}`;
+
+  navigator.clipboard.writeText(prompt)
+    .then(() => {
+      alert("Copié tu pregunta. Ahora se abrirá ChatGPT; solo pégala en el chat.");
+      window.open("https://chatgpt.com/", "_blank");
+    })
+    .catch(() => {
+      alert("No pude copiar automáticamente. Se abrirá ChatGPT. Copia esta pregunta manualmente: " + prompt);
+      window.open("https://chatgpt.com/", "_blank");
+    });
+}
+
+chatInput.addEventListener("keydown",e=>{if(e.key==="Enter")sendMessage();});
+</script>
+
+</body>
+</html>
